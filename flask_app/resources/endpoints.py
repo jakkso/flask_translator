@@ -6,6 +6,8 @@ from flask_jwt_extended import (
     get_jwt_identity,
     get_raw_jwt,
 )
+from jwt import ExpiredSignatureError
+
 from flask_restful import Resource, reqparse
 
 from flask_app.models import RevokedTokenModel, UserModel
@@ -73,7 +75,7 @@ class UserLogoutAccess(Resource):
             revoked_token = RevokedTokenModel(jti=jti)
             revoked_token.add()
             return {"message": "Access token has been revoked"}
-        except:
+        except ExpiredSignatureError:
             return {"message": "Something went wrong"}, 500
 
 

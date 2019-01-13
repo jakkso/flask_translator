@@ -25,7 +25,8 @@ def check_if_token_in_blacklist(decrypted_token):
 
 def create_app() -> Flask:
     """
-    API endpoint configuration import is in this func to prevent import errors
+    API endpoint configuration
+    import is in this func to prevent import errors
     """
     from flask_app.resources import endpoints
     db.create_all()
