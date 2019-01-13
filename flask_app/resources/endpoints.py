@@ -27,7 +27,7 @@ class UserRegistration(Resource):
     def post(self):
         data = parser.parse_args()
         if UserModel.find_by_username(data["username"]):
-            return {"message": f'User {data["username"]} already exists'}
+            return {"message": f'User {data["username"]} already exists'}, 400
 
         new_user = UserModel(
             username=data["username"],
@@ -38,11 +38,14 @@ class UserRegistration(Resource):
             new_user.save_to_db()
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])
-            return {
-                "message": f'User {data["username"]} was created',
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-            }
+            return (
+                {
+                    "message": f'User {data["username"]} was created',
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                },
+                201,
+            )
         except:
             return {"message": "Something went wrong"}, 500
 
@@ -53,18 +56,21 @@ class UserLogin(Resource):
         current_user = UserModel.find_by_username(data["username"])
 
         if not current_user:
-            return {"message": f"User {data['username']} does not exist"}
+            return {"message": f"User {data['username']} does not exist"}, 400
 
         if UserModel.verify_hash(data["password"], current_user.password):
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])
-            return {
-                "message": f"Logged in as {current_user.username}",
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-            }
+            return (
+                {
+                    "message": f"Logged in as {current_user.username}",
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                },
+                200,
+            )
         else:
-            return {"message": "Bad credentials"}
+            return {"message": "Bad credentials"}, 400
 
 
 class UserLogoutAccess(Resource):
@@ -74,7 +80,7 @@ class UserLogoutAccess(Resource):
         try:
             revoked_token = RevokedTokenModel(jti=jti)
             revoked_token.add()
-            return {"message": "Access token has been revoked"}
+            return {"message": "Access token has been revoked"}, 202
         except ExpiredSignatureError:
             return {"message": "Something went wrong"}, 500
 
@@ -86,7 +92,7 @@ class UserLogoutRefresh(Resource):
         try:
             revoked_token = RevokedTokenModel(jti=jti)
             revoked_token.add()
-            return {"message": "Refresh token has been revoked"}
+            return {"message": "Refresh token has been revoked"}, 202
         except:
             return {"message": "Something went wrong"}, 500
 
@@ -96,15 +102,15 @@ class TokenRefresh(Resource):
     def post(self):
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user)
-        return {"access_token": access_token}
+        return {"access_token": access_token}, 200
 
 
 class AllUsers(Resource):
     def get(self):
-        return UserModel.return_all()
+        return UserModel.return_all(), 200
 
     def delete(self):
-        return UserModel.delete_all()
+        return UserModel.delete_all(), 202
 
 
 class SecretResource(Resource):
@@ -112,4 +118,4 @@ class SecretResource(Resource):
     def get(self):
         data = translator.parse_args()
         response = translate(text=data["text"], src=data["from"], target=data["to"])
-        return response
+        return response, 200

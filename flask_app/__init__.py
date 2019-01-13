@@ -19,16 +19,20 @@ migrate = Migrate(app)
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
     from flask_app import models
+
     jti = decrypted_token["jti"]
     return models.RevokedTokenModel.is_jti_blacklisted(jti)
 
 
-def create_app() -> Flask:
+def create_app(test_config=None) -> Flask:
     """
     API endpoint configuration
     import is in this func to prevent import errors
     """
     from flask_app.resources import endpoints
+
+    if test_config:
+        app.config.update(test_config)
     db.create_all()
     api = Api(app)
     api.add_resource(endpoints.UserRegistration, "/registration")
@@ -39,4 +43,3 @@ def create_app() -> Flask:
     api.add_resource(endpoints.AllUsers, "/users")
     api.add_resource(endpoints.SecretResource, "/secret")
     return app
-
