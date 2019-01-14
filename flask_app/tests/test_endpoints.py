@@ -1,5 +1,7 @@
 """
 Contain tests for API endpoints
+
+`app` is a pytest fixture so that each test is repeated with its own flask app
 """
 import json
 
@@ -12,35 +14,35 @@ def test_registration(app) -> None:
     """
     client = app.test_client
     no_body = client().post("/registration")
-    assert no_body.status_code == 400
+    assert 400 == no_body.status_code
     body = json.loads(no_body.data.decode("utf-8"))
-    assert body["message"].get("username") == "This field cannot be blank"
+    assert "This field cannot be blank" == body["message"].get("username")
 
     no_pw = client().post("/registration", data={"username": "bob"})
-    assert no_pw.status_code == 400
+    assert 400 == no_pw.status_code
     body = json.loads(no_pw.data.decode("utf-8"))
-    assert body["message"].get("password") == "This field cannot be blank"
+    assert "This field cannot be blank" == body["message"].get("password")
 
     no_username = client().post("/registration", data={"password": "bob"})
-    assert no_username.status_code == 400
+    assert 400 == no_username.status_code
     body = json.loads(no_username.data.decode("utf-8"))
-    assert body["message"].get("username") == "This field cannot be blank"
+    assert "This field cannot be blank" == body["message"].get("username")
 
     bob = client().post(
         "/registration", data={"username": "bob", "password": "hunter2"}
     )
-    assert bob.status_code == 201
+    assert 201 == bob.status_code
     body = json.loads(bob.data.decode("utf-8"))
-    assert body["message"] == "User bob was created"
+    assert "User bob was created" == body["message"]
     assert body["access_token"] is not None
     assert body["refresh_token"] is not None
 
     duplicate_bob = client().post(
         "/registration", data={"username": "bob", "password": "hunter2"}
     )
-    assert duplicate_bob.status_code == 400
+    assert 400 == duplicate_bob.status_code
     body = json.loads(duplicate_bob.data.decode("utf-8"))
-    assert body["message"] == "User bob already exists"
+    assert "User bob already exists" == body["message"]
 
 
 def test_login(app) -> None:
@@ -69,7 +71,7 @@ def test_logout_access(app) -> None:
     """
     client = app.test_client
     no_token = client().post("/logout/access")
-    assert no_token.status_code == 401
+    assert 401 == no_token.status_code
     bob = client().post(
         "/registration", data={"username": "bob", "password": "hunter2"}
     )
@@ -77,9 +79,11 @@ def test_logout_access(app) -> None:
     access_token = body["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
     invalidate_access = client().post("/logout/access", headers=headers)
-    assert invalidate_access.status_code == 202
+    assert 202 == invalidate_access.status_code
+    body = json.loads(invalidate_access.data.decode("utf-8"))
+    assert "Access token has been revoked" == body["message"]
     revoked_token = client().post("/logout/access", headers=headers)
-    assert revoked_token.status_code == 401
+    assert 401 == revoked_token.status_code
 
 
 def test_logout_refresh(app) -> None:
@@ -88,17 +92,19 @@ def test_logout_refresh(app) -> None:
     """
     client = app.test_client
     no_token = client().post("/logout/access")
-    assert no_token.status_code == 401
+    assert 401 == no_token.status_code
     bob = client().post(
         "/registration", data={"username": "bob", "password": "hunter2"}
     )
     body = json.loads(bob.data.decode("utf-8"))
-    refresh_token = body['refresh_token']
-    headers = {'Authorization': f'Bearer {refresh_token}'}
-    invalidate_refresh = client().post('/logout/refresh', headers=headers)
-    assert invalidate_refresh.status_code == 202
+    refresh_token = body["refresh_token"]
+    headers = {"Authorization": f"Bearer {refresh_token}"}
+    invalidate_refresh = client().post("/logout/refresh", headers=headers)
+    assert 202 == invalidate_refresh.status_code
+    body = json.loads(invalidate_refresh.data.decode("utf-8"))
+    assert "Refresh token has been revoked" == body["message"]
     revoked_token = client().post("/logout/refresh", headers=headers)
-    assert revoked_token.status_code == 401
+    assert 401 == revoked_token.status_code
 
 
 def test_refresh_access(app) -> None:
@@ -110,19 +116,15 @@ def test_refresh_access(app) -> None:
         "/registration", data={"username": "bob", "password": "hunter2"}
     )
     body = json.loads(bob.data.decode("utf-8"))
-    access_token = body['access_token']
-    refresh_token = body['refresh_token']
-    no_token = client().post('/token/refresh')
-    assert no_token.status_code == 401
-    headers = {'Authorization': f'Bearer {access_token}'}
-    bad_token = client().post('/token/refresh', headers=headers)
+    access_token = body["access_token"]
+    refresh_token = body["refresh_token"]
+    no_token = client().post("/token/refresh")
+    assert 401 == no_token.status_code
+    headers = {"Authorization": f"Bearer {access_token}"}
+    bad_token = client().post("/token/refresh", headers=headers)
     assert 422 == bad_token.status_code
-    headers = {'Authorization': f'Bearer {refresh_token}'}
-    good_token = client().post('/token/refresh', headers=headers)
+    headers = {"Authorization": f"Bearer {refresh_token}"}
+    good_token = client().post("/token/refresh", headers=headers)
     assert 200 == good_token.status_code
     body = json.loads(good_token.data.decode("utf-8"))
-    assert access_token != body['access_token']
-
-
-
-
+    assert access_token != body["access_token"]
