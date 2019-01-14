@@ -101,3 +101,28 @@ def test_logout_refresh(app) -> None:
     assert revoked_token.status_code == 401
 
 
+def test_refresh_access(app) -> None:
+    """
+    Tests refreshing access token functionality
+    """
+    client = app.test_client
+    bob = client().post(
+        "/registration", data={"username": "bob", "password": "hunter2"}
+    )
+    body = json.loads(bob.data.decode("utf-8"))
+    access_token = body['access_token']
+    refresh_token = body['refresh_token']
+    no_token = client().post('/token/refresh')
+    assert no_token.status_code == 401
+    headers = {'Authorization': f'Bearer {access_token}'}
+    bad_token = client().post('/token/refresh', headers=headers)
+    assert 422 == bad_token.status_code
+    headers = {'Authorization': f'Bearer {refresh_token}'}
+    good_token = client().post('/token/refresh', headers=headers)
+    assert 200 == good_token.status_code
+    body = json.loads(good_token.data.decode("utf-8"))
+    assert access_token != body['access_token']
+
+
+
+
