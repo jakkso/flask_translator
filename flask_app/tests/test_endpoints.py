@@ -80,3 +80,24 @@ def test_logout_access(app) -> None:
     assert invalidate_access.status_code == 202
     revoked_token = client().post("/logout/access", headers=headers)
     assert revoked_token.status_code == 401
+
+
+def test_logout_refresh(app) -> None:
+    """
+    Test logout of refresh token functionality
+    """
+    client = app.test_client
+    no_token = client().post("/logout/access")
+    assert no_token.status_code == 401
+    bob = client().post(
+        "/registration", data={"username": "bob", "password": "hunter2"}
+    )
+    body = json.loads(bob.data.decode("utf-8"))
+    refresh_token = body['refresh_token']
+    headers = {'Authorization': f'Bearer {refresh_token}'}
+    invalidate_refresh = client().post('/logout/refresh', headers=headers)
+    assert invalidate_refresh.status_code == 202
+    revoked_token = client().post("/logout/refresh", headers=headers)
+    assert revoked_token.status_code == 401
+
+
