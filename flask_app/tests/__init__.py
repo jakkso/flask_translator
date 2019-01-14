@@ -13,5 +13,4 @@ def app():
     :return:
     """
     test_config = {"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"}
-    app = create_app(test_config)
-    yield app
+    return create_app(test_config)

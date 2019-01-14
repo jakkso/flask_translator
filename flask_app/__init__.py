@@ -9,11 +9,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 from settings import Config
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
-migrate = Migrate(app)
+db = SQLAlchemy()
+jwt = JWTManager()
 
 
 @jwt.token_in_blacklist_loader
@@ -31,9 +28,15 @@ def create_app(test_config=None) -> Flask:
     """
     from flask_app.resources import endpoints
 
+    app = Flask(__name__)
+    app.config.from_object(Config)
     if test_config:
         app.config.update(test_config)
-    db.create_all()
+    with app.app_context():
+        db.init_app(app)
+        db.create_all()
+        jwt.init_app(app)
+    migrate = Migrate(app)
     api = Api(app)
     api.add_resource(endpoints.UserRegistration, "/registration")
     api.add_resource(endpoints.UserLogin, "/login")
