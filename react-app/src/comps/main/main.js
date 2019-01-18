@@ -69,6 +69,7 @@ export default class MainView extends React.Component {
       // login call
       url = this.baseUrl + 'login';
     }
+    if (!username || !password) return;
     const resp = await fetch(url, fetchOptions);
     const data = await resp.json();  // resolve the promise returned by fetch
     if (data.message === `User ${username} already exists`) {
@@ -77,13 +78,17 @@ export default class MainView extends React.Component {
       return this.setState({errText: 'Bad username or password'});
     } else if (data.message === `Logged in as ${username}` || data.message === `User ${username} was created`) {
       if (data.access_token && data.refresh_token) {
-        return this.setState({access_token: data.access_token, refresh_token: data.refresh_token});
+        this.setState({username: '', password: ''});
+        return this.setState({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          errText: ''
+        });
       }
       }
   }
 
   /**
-   * TODO this is a naive implementation.  Contains no error handling.
    * @param sourceLang abbreviation of a language's name.  e.g., `en` for English
    * @param targetLang abbreviation of a language's name.  e.g., `en` for English
    * @param text Text to translate
@@ -94,23 +99,43 @@ export default class MainView extends React.Component {
     const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.access_token}`};
     const body = {text: text, to: targetLang, from: sourceLang};
     const resp = await fetch(secretURL, {
-      method: 'GET',
+      method: 'POST',
       mode: 'cors',
       headers: headers,
       body: JSON.stringify(body)
     });
-    const data = await resp.json()[0];
-    return data.translations['text'];
+    const data = await resp.json();
+    if (data.error) {
+      this.setState({errText: `Error: ${data.error.code} ${data.error.message}`});
+      return {success: false, message: data.error.message}
+    }
+    if (data[0]){
+      data[0].success = true;
+      return data[0];
+    }
   }
 
   /**
-   * Logs out refresh and access tokens, removes them from state
+   * Invalidates refresh and access tokens via API calls, removes them from state
    * @param event
    */
-  logout(event) {
+  async logout(event) {
     event.preventDefault();
-    // TODO call logout flask API here
-    this.setState({access_token: null, refresh_token: null})
+    const logoutURL= this.baseUrl + 'logout/';
+    const access_headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.access_token}`};
+    const refresh_headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.refresh_token}`};
+    const options = {
+      method: 'POST',
+      mode: 'cors',
+      headers: access_headers,
+    };
+    const invalidateAccess = await fetch(logoutURL + 'access', options);
+    options.headers = refresh_headers;
+    const invalidateRefresh = await fetch(logoutURL + 'refresh', options);
+    if (invalidateAccess.ok && invalidateRefresh.ok) {
+      this.setState({access_token: null, refresh_token: null})
+    }
+
   }
 
   render() {
@@ -122,17 +147,18 @@ export default class MainView extends React.Component {
         username={username}
         password={password}
         checkbox={checkbox}
-        errText={errText}
         onChange={this.onAuthChange}
         onSubmit={this.onAuthSubmit}
       />;
     const translator = loggedIn ?
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
+    const error = errText ? <div>{errText}</div> : null;
       return (
       <div>
         {auth}
         {translator}
+        {error}
       </div>
     )
   }

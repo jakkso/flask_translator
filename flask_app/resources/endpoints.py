@@ -105,17 +105,9 @@ class TokenRefresh(Resource):
         return {"access_token": access_token}, 200
 
 
-class AllUsers(Resource):
-    def get(self):
-        return UserModel.return_all(), 200
-
-    def delete(self):
-        return UserModel.delete_all(), 202
-
-
 class SecretResource(Resource):
     @jwt_required
-    def get(self):
+    def post(self):
         data = translator.parse_args()
         response = translate(text=data["text"], src=data["from"], target=data["to"])
         return response, 200

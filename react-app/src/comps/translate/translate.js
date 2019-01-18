@@ -4,66 +4,6 @@ import LanguageChooser from './langChooser';
 
 import './translate.css'
 
-/**
- * SFC to display the translator UI
- * @param props
- */
-export function Translator(props){
-  const {
-    inputText,
-    translatedText,
-    langs,
-    sourceLang,
-    targetLang,
-    onChange,
-    onSubmit,
-    logout} = props;
-
-  const srcChooser = langs ?
-    <LanguageChooser
-      langs={langs}
-      excluded={targetLang}
-      onChange={onChange}
-      name='source-lang'
-      selected={sourceLang}
-    /> : null;
-  const targetChooser = langs ?
-    <LanguageChooser
-      langs={langs}
-      excluded={sourceLang}
-      onChange={onChange}
-      name='target-lang'
-      selected={targetLang}
-    /> : null;
-
-    return (
-    <div>
-      <button
-        onSubmit={logout}
-      >
-        Logout
-      </button>
-      {srcChooser}
-      {targetChooser}
-      <form>
-        <input
-        id="inputText"
-        onChange={onChange}
-        onSubmit={onSubmit}
-        value={inputText}
-        />
-      </form>
-      <div id="translatedText">
-        <span>TRANSLATED TEXT</span>
-        <div>
-          {translatedText}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
 export default class Translate extends React.Component {
   constructor(props) {
     super(props);
@@ -79,12 +19,16 @@ export default class Translate extends React.Component {
     this.state = {
       inputText: '',
       translatedText: '',
-      sourceLang: 'es',
-      targetLang: 'en',
+      sourceLang: 'en',
+      targetLang: 'es',
       langs: null,
     };
   }
 
+  /**
+   * onchange handler for storing source and target languages and inputText in state
+   * @param event
+   */
   onChange(event) {
     const id = event.target.id;
     switch (id) {
@@ -99,11 +43,18 @@ export default class Translate extends React.Component {
     }
   }
 
+  /**
+   * @param event
+   * @return {Promise<void>}
+   */
   async onSubmit(event) {
     event.preventDefault();
     const {inputText, sourceLang, targetLang} = this.state;
     const resp = await this.sendReq(sourceLang, targetLang, inputText);
-    this.setState({translatedText: resp})
+    if (!resp.success) return;
+    const trans = resp.translations;
+    const text = trans[0].text;
+    this.setState({translatedText: text, inputText: ''})
   }
 
   /**
@@ -124,7 +75,49 @@ export default class Translate extends React.Component {
     this.getLangs()
   }
 
-  // render() {
-  //   const {inputText, translatedText, sourceLang, targetLang, langs} = this.state;
-  // }
+  render() {
+    const {inputText, translatedText, sourceLang, targetLang, langs} = this.state;
+    const srcSelect = langs ? <LanguageChooser
+      langs={langs}
+      excluded={targetLang}
+      onChange={this.onChange}
+      name='source-lang'
+      selected={sourceLang}
+    />: null;
+    const targetSelect = langs ? <LanguageChooser
+      langs={langs}
+      excluded={sourceLang}
+      onChange={this.onChange}
+      name='target-lang'
+      selected={targetLang}
+    />: null;
+    return (
+      <div>
+        <button
+          onClick={this.logout}
+        >
+          Logout
+        </button>
+        {srcSelect}
+        {targetSelect}
+        <form>
+          <input
+            id="inputText"
+            onChange={this.onChange}
+            onSubmit={this.onSubmit}
+            value={inputText}
+          />
+          <button onClick={this.onSubmit}>
+            Translate
+          </button>
+        </form>
+        <div id="translatedText">
+          <span>TRANSLATED TEXT</span>
+          <div>
+            {translatedText}
+          </div>
+        </div>
+      </div>
+    )
+  }
 }

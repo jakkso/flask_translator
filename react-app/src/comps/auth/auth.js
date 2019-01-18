@@ -2,8 +2,6 @@ import React from 'react'
 
 import './auth.css'
 
-import ErrText from './errText/errText';
-
 /**
  *
  * @param props
@@ -15,8 +13,7 @@ import ErrText from './errText/errText';
  * @return {HTMLDivElement}
  */
 export default function Auth(props) {
-  const {username, password, errText, onChange, onSubmit} = props;
-  const err = errText ? <ErrText text={errText} />: null;
+  const {username, password, onChange, onSubmit} = props;
   return (
     <div id="auth-container">
       <form id="auth-form">
@@ -54,7 +51,7 @@ export default function Auth(props) {
           onClick={onSubmit}
         />
       </form>
-      {err}
+      {/*{err}*/}
     </div>
   )
 }
