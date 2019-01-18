@@ -3,7 +3,7 @@ import React from 'react';
 import './main.css'
 
 import Auth from '../auth/auth';
-import Translator from '../translate/translate';
+import Translate from '../translate/translate';
 
 export default class MainView extends React.Component {
   constructor(props) {
@@ -13,7 +13,7 @@ export default class MainView extends React.Component {
     this.onAuthSubmit = this.onAuthSubmit.bind(this);
     this.logout = this.logout.bind(this);
     this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
-    this.baseUrl = 'localhost:5000/';
+    this.baseUrl = 'http://localhost:5000/';
 
     // State construction
     this.state = {
@@ -50,14 +50,36 @@ export default class MainView extends React.Component {
    * Handles logging in / registration calls
    * @param event
    */
-  onAuthSubmit(event) {
+  async onAuthSubmit(event) {
     event.preventDefault();
-    const {checkbox} = this.state;
+    let url;
+    const {username, password, checkbox} = this.state;
+    const body = JSON.stringify({username: username, password: password});
+    const headers = {"Content-Type": 'application/json'};
+    const fetchOptions = {
+      method: 'POST',
+      mode: 'cors',
+      headers: headers,
+      body: body
+    };
     if (checkbox) {
       // registration call
+      url = this.baseUrl + 'registration';
     } else {
       // login call
+      url = this.baseUrl + 'login';
     }
+    const resp = await fetch(url, fetchOptions);
+    const data = await resp.json();  // resolve the promise returned by fetch
+    if (data.message === `User ${username} already exists`) {
+      return this.setState({errText: data.message});
+    } else if (data.message === 'Bad credentials' || data.message === `User ${username} does not exist`) {
+      return this.setState({errText: 'Bad username or password'});
+    } else if (data.message === `Logged in as ${username}` || data.message === `User ${username} was created`) {
+      if (data.access_token && data.refresh_token) {
+        return this.setState({access_token: data.access_token, refresh_token: data.refresh_token});
+      }
+      }
   }
 
   /**
@@ -104,11 +126,13 @@ export default class MainView extends React.Component {
         onChange={this.onAuthChange}
         onSubmit={this.onAuthSubmit}
       />;
-
-
+    const translator = loggedIn ?
+      <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
+      : null;
       return (
       <div>
         {auth}
+        {translator}
       </div>
     )
   }

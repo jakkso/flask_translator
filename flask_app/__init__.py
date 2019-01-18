@@ -2,6 +2,7 @@
 Contains app creation functionality
 """
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_restful import Api
@@ -38,6 +39,7 @@ def create_app(test_config=None) -> Flask:
         jwt.init_app(app)
     migrate = Migrate(app)
     api = Api(app)
+    CORS(app)
     api.add_resource(endpoints.UserRegistration, "/registration")
     api.add_resource(endpoints.UserLogin, "/login")
     api.add_resource(endpoints.UserLogoutAccess, "/logout/access")
