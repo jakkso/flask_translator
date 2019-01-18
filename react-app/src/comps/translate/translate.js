@@ -1,6 +1,7 @@
 import React from 'react'
 
 import LanguageChooser from './langChooser';
+import MaterialLangSelect from './langChooser';
 
 import './translate.css'
 
@@ -30,17 +31,7 @@ export default class Translate extends React.Component {
    * @param event
    */
   onChange(event) {
-    const id = event.target.id;
-    switch (id) {
-      case 'source-lang':
-        return this.setState({sourceLang: event.target.value});
-      case 'target-lang':
-        return this.setState({targetLang: event.target.value});
-      case 'inputText':
-        return this.setState({inputText: event.target.value});
-      default:
-        return;
-    }
+    this.setState({ [event.target.name]: event.target.value });
   }
 
   /**
@@ -77,19 +68,21 @@ export default class Translate extends React.Component {
 
   render() {
     const {inputText, translatedText, sourceLang, targetLang, langs} = this.state;
-    const srcSelect = langs ? <LanguageChooser
+    const srcSelect = langs ? <MaterialLangSelect
       langs={langs}
       excluded={targetLang}
       onChange={this.onChange}
-      name='source-lang'
+      id="sourceLang"
       selected={sourceLang}
+      label="Source Language"
     />: null;
-    const targetSelect = langs ? <LanguageChooser
+    const targetSelect = langs ? <MaterialLangSelect
       langs={langs}
       excluded={sourceLang}
       onChange={this.onChange}
-      name='target-lang'
+      id="targetLang"
       selected={targetLang}
+      label="Target Language"
     />: null;
     return (
       <div>

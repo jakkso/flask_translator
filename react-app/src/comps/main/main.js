@@ -3,17 +3,20 @@ import React from 'react';
 import './main.css'
 
 import Auth from '../auth/auth';
+import SignIn from '../auth/auth';
+import PaperSheet from '../titleBar/titleBar';
 import Translate from '../translate/translate';
 
 export default class MainView extends React.Component {
   constructor(props) {
     super(props);
+    this.baseUrl = 'http://localhost:5000/';
+
     // Bind instance methods
     this.onAuthChange = this.onAuthChange.bind(this);
     this.onAuthSubmit = this.onAuthSubmit.bind(this);
     this.logout = this.logout.bind(this);
     this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
-    this.baseUrl = 'http://localhost:5000/';
 
     // State construction
     this.state = {
@@ -63,10 +66,8 @@ export default class MainView extends React.Component {
       body: body
     };
     if (checkbox) {
-      // registration call
       url = this.baseUrl + 'registration';
     } else {
-      // login call
       url = this.baseUrl + 'login';
     }
     if (!username || !password) return;
@@ -84,6 +85,8 @@ export default class MainView extends React.Component {
           refresh_token: data.refresh_token,
           errText: ''
         });
+      } else {
+        return this.setState({username: '', password: '', errText: 'Authentication failure, please try again later'})
       }
       }
   }
@@ -133,7 +136,7 @@ export default class MainView extends React.Component {
     options.headers = refresh_headers;
     const invalidateRefresh = await fetch(logoutURL + 'refresh', options);
     if (invalidateAccess.ok && invalidateRefresh.ok) {
-      this.setState({access_token: null, refresh_token: null})
+      this.setState({access_token: null, refresh_token: null, checkbox: false})
     }
 
   }
@@ -142,6 +145,7 @@ export default class MainView extends React.Component {
     const {access_token, refresh_token} = this.state;
     const {username, password, checkbox, errText} = this.state;
     const loggedIn = access_token && refresh_token;
+
     const auth = loggedIn ? null :
       <Auth
         username={username}
@@ -154,10 +158,18 @@ export default class MainView extends React.Component {
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
     const error = errText ? <div>{errText}</div> : null;
+    const signIn = loggedIn ? null : <SignIn
+      username={username}
+      password={password}
+      onChange={this.onAuthChange}
+      onSubmit={this.onAuthSubmit}
+    />;
       return (
       <div>
-        {auth}
-        {translator}
+        <PaperSheet/>
+        {/*{signIn}*/}
+        {/*{translator}*/}
+        <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
         {error}
       </div>
     )

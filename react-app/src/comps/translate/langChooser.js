@@ -1,40 +1,56 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 
-export default function LanguageChooser(props) {
-  const {langs, excluded, onChange, name, selected} = props;
-  const filteredLangs = langs.filter(lang => {
+const styles = theme => ({
+  root: {
+    display: 'flex',
+    flexWrap: 'wrap',
+  },
+  formControl: {
+    margin: theme.spacing.unit,
+    minWidth: 150,
+  },
+  selectEmpty: {
+    marginTop: theme.spacing.unit * 2,
+  },
+});
+
+function MaterialLangSelect(props) {
+  const { classes, langs, excluded, onChange, id, selected, label } = props;
+  const availableLanguages = langs.filter(lang => {
     return lang[0] !== excluded;
-  }).map(lang => {
-    const [shortName, nameObj] = lang;
-    return (
-      <option
-        key={shortName}
-        value={shortName}
-      >
-        {nameObj.name}
-      </option>
-    )
-  });
+    })
+    .map(lang => {
+      const [shortName, langObj] = lang;
+      return (
+        <MenuItem value={shortName} key={shortName}>
+          {langObj.name}
+        </MenuItem>
+      )
+    });
   return (
-    <select
-      id={name}
-      onChange={onChange}
-      value={selected}
-    >
-      {filteredLangs}
-    </select>
+    <form className={classes.root}>
+      <FormControl className={classes.formControl}>
+        <InputLabel htmlFor={id}>{label}</InputLabel>
+        <Select
+          value={selected}
+          onChange={onChange}
+          id={id}
+          name={id}
+        >
+          {availableLanguages}
+        </Select>
+      </FormControl>
+    </form>
   )
 }
 
-/**
- Okay, so this component needs to display a list of languages for user
- to select.
- It shouldn't display a single language supplied in the props, which
- allows it to be re-usable for the source and target languages, as in
- source picker should default to English, which is supplied to target
- picker
+// MaterialLangSelect.propTypes = {
+//   classes: PropTypes.object.isRequired,
+// };
 
- I can pick a default source (English) and target (Say, Spanish)
- each is fed into this func as the excluded language
-
- **/
+export default withStyles(styles)(MaterialLangSelect);
