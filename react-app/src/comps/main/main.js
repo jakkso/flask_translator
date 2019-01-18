@@ -2,7 +2,8 @@ import React from 'react';
 
 import './main.css'
 
-import Auth from '../auth/auth'
+import Auth from '../auth/auth';
+import Translator from '../translate/translate';
 
 export default class MainView extends React.Component {
   constructor(props) {
@@ -10,31 +11,20 @@ export default class MainView extends React.Component {
     // Bind instance methods
     this.onAuthChange = this.onAuthChange.bind(this);
     this.onAuthSubmit = this.onAuthSubmit.bind(this);
-    this.getLangs = this.getLangs.bind(this);
+    this.logout = this.logout.bind(this);
+    this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
+    this.baseUrl = 'localhost:5000/';
+
     // State construction
     this.state = {
       username: '',
       password: '',
       checkbox: false,
       errText: '',
-      inputText: '',
-      translatedText: '',
-      sourceLang: null,
-      targetLang: null,
       access_token: null,
       refresh_token: null,
-      logged_in: false,
       langs: null,
     }
-  }
-
-  /**
-   * Make network call after comp mounts.  This will trigger
-   * a component re-render if user is logged in.
-   */
-  componentDidMount() {
-    const langs = this.getLangs();
-    this.setState({langs});
   }
 
   /**
@@ -57,7 +47,7 @@ export default class MainView extends React.Component {
   }
 
   /**
-   * Handles logging in / registration
+   * Handles logging in / registration calls
    * @param event
    */
   onAuthSubmit(event) {
@@ -71,18 +61,34 @@ export default class MainView extends React.Component {
   }
 
   /**
-   * In the future this will be replaced with an api call to MS,
-   * but I'm on a plane without net access, so I can't get an example
-   * of what the return value actually is.  I think it's somewhat similar to this.
+   * TODO this is a naive implementation.  Contains no error handling.
+   * @param sourceLang abbreviation of a language's name.  e.g., `en` for English
+   * @param targetLang abbreviation of a language's name.  e.g., `en` for English
+   * @param text Text to translate
+   * @return {Promise<*>}
    */
-  getLangs() {
-    const langs = [
-      {name: 'en', fullName: 'English'},
-      {name: 'fr', fullName: 'French'},
-      {name: 'it', fullName: 'Italian'},
-      {name: 'es', fullName: 'Spanish'},
-    ];
-    return langs;
+  async sendTranslateRequest(sourceLang, targetLang, text) {
+    const secretURL = this.baseUrl + 'secret';
+    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.access_token}`};
+    const body = {text: text, to: targetLang, from: sourceLang};
+    const resp = await fetch(secretURL, {
+      method: 'GET',
+      mode: 'cors',
+      headers: headers,
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json()[0];
+    return data.translations['text'];
+  }
+
+  /**
+   * Logs out refresh and access tokens, removes them from state
+   * @param event
+   */
+  logout(event) {
+    event.preventDefault();
+    // TODO call logout flask API here
+    this.setState({access_token: null, refresh_token: null})
   }
 
   render() {
@@ -98,7 +104,9 @@ export default class MainView extends React.Component {
         onChange={this.onAuthChange}
         onSubmit={this.onAuthSubmit}
       />;
-    return (
+
+
+      return (
       <div>
         {auth}
       </div>
