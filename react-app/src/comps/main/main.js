@@ -2,7 +2,6 @@ import React from 'react';
 
 import './main.css'
 
-import Auth from '../auth/auth';
 import SignIn from '../auth/auth';
 import PaperSheet from '../titleBar/titleBar';
 import Translate from '../translate/translate';
@@ -143,17 +142,9 @@ export default class MainView extends React.Component {
 
   render() {
     const {access_token, refresh_token} = this.state;
-    const {username, password, checkbox, errText} = this.state;
+    const {username, password, errText} = this.state;
     const loggedIn = access_token && refresh_token;
 
-    const auth = loggedIn ? null :
-      <Auth
-        username={username}
-        password={password}
-        checkbox={checkbox}
-        onChange={this.onAuthChange}
-        onSubmit={this.onAuthSubmit}
-      />;
     const translator = loggedIn ?
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
@@ -167,9 +158,9 @@ export default class MainView extends React.Component {
       return (
       <div>
         <PaperSheet/>
-        {/*{signIn}*/}
-        {/*{translator}*/}
-        <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
+        {signIn}
+        {translator}
+        {/*<Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>*/}
         {error}
       </div>
     )

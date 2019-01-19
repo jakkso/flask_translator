@@ -1,7 +1,12 @@
 import React from 'react'
 
-import LanguageChooser from './langChooser';
+import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
+
 import MaterialLangSelect from './langChooser';
+import Button from './submitButton';
+import TextInput from './textInput';
+import TextDisplay from './textDisplay';
 
 import './translate.css'
 
@@ -49,7 +54,7 @@ export default class Translate extends React.Component {
   }
 
   /**
-   * @return {Promise<null>}
+   * Populate state.langs with the available languages from the azure API
    */
   async getLangs() {
     const langsURL = 'https://api.cognitive.microsofttranslator.com/languages?api-version=3.0';
@@ -59,57 +64,74 @@ export default class Translate extends React.Component {
     this.setState({langs});
   }
 
-  /**
-   * After comp mounts, send request to get available languages from microsoft
-   */
   componentDidMount() {
     this.getLangs()
   }
 
   render() {
     const {inputText, translatedText, sourceLang, targetLang, langs} = this.state;
-    const srcSelect = langs ? <MaterialLangSelect
-      langs={langs}
-      excluded={targetLang}
-      onChange={this.onChange}
-      id="sourceLang"
-      selected={sourceLang}
-      label="Source Language"
-    />: null;
-    const targetSelect = langs ? <MaterialLangSelect
-      langs={langs}
-      excluded={sourceLang}
-      onChange={this.onChange}
-      id="targetLang"
-      selected={targetLang}
-      label="Target Language"
-    />: null;
+    const srcSelect = langs ?
+      <MaterialLangSelect
+        langs={langs}
+        excluded={targetLang}
+        onChange={this.onChange}
+        id="sourceLang"
+        selected={sourceLang}
+        label="Source Language"
+      />: null;
+    const targetSelect = langs ?
+      <MaterialLangSelect
+        langs={langs}
+        excluded={sourceLang}
+        onChange={this.onChange}
+        id="targetLang"
+        selected={targetLang}
+        label="Target Language"
+      />: null;
     return (
       <div>
-        <button
-          onClick={this.logout}
+        <Grid
+          container
+          direction={"column"}
+          justify={"space-evenly"}
+          alignItems={"center"}
+          spacing={8}
         >
-          Logout
-        </button>
-        {srcSelect}
-        {targetSelect}
-        <form>
-          <input
-            id="inputText"
-            onChange={this.onChange}
-            onSubmit={this.onSubmit}
-            value={inputText}
-          />
-          <button onClick={this.onSubmit}>
-            Translate
-          </button>
-        </form>
-        <div id="translatedText">
-          <span>TRANSLATED TEXT</span>
-          <div>
-            {translatedText}
-          </div>
-        </div>
+          <Grid
+            item
+            container
+            xs={12}
+            direction={"row"}
+            justify={"center"}
+          >
+            {srcSelect}
+            {targetSelect}
+          </Grid>
+          <Paper>
+            <Grid
+              item
+              container
+              direction={"row"}
+              justify={"center"}
+              alignItems={"center"}
+            >
+              <Paper>
+                <form>
+                  <TextInput
+                    inputText={inputText}
+                    onChange={this.onChange}
+                    onSubmit={this.onSubmit}
+                  />
+                </form>
+              </Paper>
+              <Button onClick={this.onSubmit} buttonText="Translate"/>
+            </Grid>
+          </Paper>
+          <Grid item xs={12}>
+            <TextDisplay text={translatedText} />
+          </Grid>
+        </Grid>
+        <Button onClick={this.logout} buttonText="Logout" />
       </div>
     )
   }
