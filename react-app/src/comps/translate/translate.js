@@ -65,7 +65,7 @@ export default class Translate extends React.Component {
   }
 
   componentDidMount() {
-    this.getLangs()
+    this.getLangs();
   }
 
   render() {
@@ -131,7 +131,7 @@ export default class Translate extends React.Component {
             <TextDisplay text={translatedText} />
           </Grid>
         </Grid>
-        <Button onClick={this.logout} buttonText="Logout" />
+        <Button onClick={this.logout} buttonText="Logout" id={'logout-btn'}/>
       </div>
     )
   }

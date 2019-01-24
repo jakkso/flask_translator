@@ -35,6 +35,7 @@ function TextInput(props) {
       rowsMax="3"
       className={classes.textField}
       margin="normal"
+      autoFocus={"autofocus"}
     />
   )
 }

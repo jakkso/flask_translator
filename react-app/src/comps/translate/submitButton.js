@@ -2,6 +2,7 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 
+import './button.css'
 
 const styles = theme => ({
   button: {
@@ -13,12 +14,13 @@ const styles = theme => ({
 });
 
 function UtilityButton(props) {
-  const { classes, onClick, buttonText } = props;
+  const { classes, onClick, buttonText, id } = props;
   return (
     <Button
       variant="contained"
       className={classes.button}
       onClick={onClick}
+      id={id}
     >
       {buttonText}
     </Button>
