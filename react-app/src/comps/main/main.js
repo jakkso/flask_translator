@@ -2,8 +2,9 @@ import React from 'react';
 
 import './main.css'
 
+import Bubble from '../notification/notification';
 import SignIn from '../auth/auth';
-import PaperSheet from '../titleBar/titleBar';
+import TitleBar from '../titleBar/titleBar';
 import Translate from '../translate/translate';
 
 export default class MainView extends React.Component {
@@ -14,6 +15,7 @@ export default class MainView extends React.Component {
     // Bind instance methods
     this.onAuthChange = this.onAuthChange.bind(this);
     this.onAuthSubmit = this.onAuthSubmit.bind(this);
+    this.refreshAccessToken = this.refreshAccessToken.bind(this);
     this.logout = this.logout.bind(this);
     this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
 
@@ -23,8 +25,8 @@ export default class MainView extends React.Component {
       password: '',
       checkbox: false,
       errText: '',
-      access_token: null,
-      refresh_token: null,
+      accessToken: null,
+      refreshToken: null,
       langs: null,
     }
   }
@@ -80,14 +82,41 @@ export default class MainView extends React.Component {
       if (data.access_token && data.refresh_token) {
         this.setState({username: '', password: ''});
         return this.setState({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
           errText: ''
         });
       } else {
         return this.setState({username: '', password: '', errText: 'Authentication failure, please try again later'})
       }
-      }
+    }
+  }
+
+  /**
+   * Access tokens expire after 15 min, this method retrieves a new one using refresh
+   * token.  If the refresh attempt fails, log out user
+   * @return {boolean}
+   */
+  async refreshAccessToken() {
+    const {refreshToken} = this.state;
+    const url = this.baseUrl + 'token/refresh';
+    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${refreshToken}`};
+    const options = {
+      method: 'POST',
+      mode: 'cors',
+      headers: headers,
+    };
+    const resp = await fetch(url, options);
+    const data = await resp.json();
+    if (data.access_token) {
+      this.setState({accessToken: data.access_token});
+      return true;
+    }
+    else {
+      await this.logout();
+      this.setState({errText: 'Please log in again.'});
+      return false;
+    }
   }
 
   /**
@@ -97,22 +126,26 @@ export default class MainView extends React.Component {
    * @return {Promise<*>}
    */
   async sendTranslateRequest(sourceLang, targetLang, text) {
-    const secretURL = this.baseUrl + 'secret';
-    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.access_token}`};
+    const translateURL = this.baseUrl + 'translate';
+    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.accessToken}`};
     const body = {text: text, to: targetLang, from: sourceLang};
-    const resp = await fetch(secretURL, {
+    const resp = await fetch(translateURL, {
       method: 'POST',
       mode: 'cors',
       headers: headers,
       body: JSON.stringify(body)
     });
     const data = await resp.json();
-    if (data.error) {
-      this.setState({errText: `Error: ${data.error.code} ${data.error.message}`});
-      return {success: false, message: data.error.message}
-    }
-    if (data[0]){
-      data[0].success = true;
+    // data.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
+    if (data.msg) {
+      const refreshSuccessful = await this.refreshAccessToken();
+      if (refreshSuccessful) {
+        return this.sendTranslateRequest(sourceLang, targetLang, text);
+      }
+      // data.error means there something went wrong with the request to Azure's translate API
+    } else if (data.error) {
+      this.setState({errText: 'Something went wrong, please try again later.'});
+    } else if (data[0]){
       return data[0];
     }
   }
@@ -122,33 +155,29 @@ export default class MainView extends React.Component {
    * @param event
    */
   async logout(event) {
-    event.preventDefault();
-    const logoutURL= this.baseUrl + 'logout/';
-    const access_headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.access_token}`};
-    const refresh_headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.refresh_token}`};
+    // Can also be called by refreshAccessToken, which doesn't call with event param
+    if (event) event.preventDefault();
+    const logoutURL = this.baseUrl + 'logout/';
+    const {accessToken, refreshToken} = this.state;
+    this.setState({accessToken: null, refreshToken: null, checkbox: false});
+    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}`};
     const options = {
       method: 'POST',
       mode: 'cors',
-      headers: access_headers,
+      headers: headers,
     };
-    const invalidateAccess = await fetch(logoutURL + 'access', options);
-    options.headers = refresh_headers;
-    const invalidateRefresh = await fetch(logoutURL + 'refresh', options);
-    if (invalidateAccess.ok && invalidateRefresh.ok) {
-      this.setState({access_token: null, refresh_token: null, checkbox: false})
-    }
-
+    await fetch(logoutURL + 'access', options);
+    options.headers['Authorization'] = `Bearer ${refreshToken}`;
+    await fetch(logoutURL + 'refresh', options);
   }
 
   render() {
-    const {access_token, refresh_token} = this.state;
-    const {username, password, errText} = this.state;
-    const loggedIn = access_token && refresh_token;
-
+    const {accessToken, refreshToken, username, password, errText} = this.state;
+    const loggedIn = accessToken && refreshToken;
     const translator = loggedIn ?
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
-    const error = errText ? <div>{errText}</div> : null;
+    const error = errText ? <Bubble message={errText} clearText={()=> this.setState({errText: ''})} /> : null;
     const signIn = loggedIn ? null : <SignIn
       username={username}
       password={password}
@@ -156,14 +185,12 @@ export default class MainView extends React.Component {
       onSubmit={this.onAuthSubmit}
     />;
       return (
-      <div>
-        <PaperSheet/>
-        {signIn}
-        {translator}
-        {/*<Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>*/}
-        {error}
-      </div>
+        <div>
+          <TitleBar/>
+          {signIn}
+          {translator}
+          {error}
+        </div>
     )
   }
-
 }

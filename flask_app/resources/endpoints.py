@@ -110,4 +110,7 @@ class SecretResource(Resource):
     def post(self):
         data = translator.parse_args()
         response = translate(text=data["text"], src=data["from"], target=data["to"])
-        return response, 200
+        if isinstance(response, list):  # Successful responses are lists of dicts
+            return response, 200
+        elif response['error']:
+            return {'error': 'Internal Service Error'}, 500

@@ -47,7 +47,7 @@ export default class Translate extends React.Component {
     event.preventDefault();
     const {inputText, sourceLang, targetLang} = this.state;
     const resp = await this.sendReq(sourceLang, targetLang, inputText);
-    if (!resp.success) return;
+    if (!resp) return;
     const trans = resp.translations;
     const text = trans[0].text;
     this.setState({translatedText: text, inputText: ''})
@@ -115,15 +115,13 @@ export default class Translate extends React.Component {
               justify={"center"}
               alignItems={"center"}
             >
-              <Paper>
-                <form>
-                  <TextInput
-                    inputText={inputText}
-                    onChange={this.onChange}
-                    onSubmit={this.onSubmit}
-                  />
-                </form>
-              </Paper>
+              <form>
+                <TextInput
+                  inputText={inputText}
+                  onChange={this.onChange}
+                  onSubmit={this.onSubmit}
+                />
+              </form>
               <Button onClick={this.onSubmit} buttonText="Translate"/>
             </Grid>
           </Paper>

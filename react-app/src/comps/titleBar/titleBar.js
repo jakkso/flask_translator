@@ -14,7 +14,7 @@ const styles = theme => ({
     marginRight: 'auto',
   },});
 
-function PaperSheet(props) {
+function TitleBar(props) {
   const { classes } = props;
 
   return (
@@ -33,4 +33,4 @@ Paper.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(PaperSheet);
+export default withStyles(styles)(TitleBar);
