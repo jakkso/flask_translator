@@ -45,5 +45,5 @@ def create_app(test_config=None) -> Flask:
     api.add_resource(endpoints.UserLogoutAccess, "/logout/access")
     api.add_resource(endpoints.UserLogoutRefresh, "/logout/refresh")
     api.add_resource(endpoints.TokenRefresh, "/token/refresh")
-    api.add_resource(endpoints.SecretResource, "/secret")
+    api.add_resource(endpoints.SecretResource, "/translate")
     return app
