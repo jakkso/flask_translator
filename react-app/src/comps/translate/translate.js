@@ -8,19 +8,16 @@ import Button from './submitButton';
 import TextInput from './textInput';
 import TextDisplay from './textDisplay';
 
-import './translate.css'
-
 export default class Translate extends React.Component {
   constructor(props) {
     super(props);
-    // sendReq and logout are method calls to parent component
+    // sendReq and logout are method calls from the parent component
     const {sendReq, logout} = props;
     this.sendReq = sendReq;
     this.logout = logout;
 
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
-    this.getLangs = this.getLangs.bind(this);
 
     this.state = {
       inputText: '',
@@ -54,18 +51,14 @@ export default class Translate extends React.Component {
   }
 
   /**
-   * Populate state.langs with the available languages from the azure API
+   * Populate state with array of languages fetched from the azure api
+   * @return {Promise<void>}
    */
-  async getLangs() {
+  async componentDidMount() {
     const langsURL = 'https://api.cognitive.microsofttranslator.com/languages?api-version=3.0';
     const res = await fetch(langsURL);
     const data = await res.json();
-    const langs = Object.entries(data.translation);
-    this.setState({langs});
-  }
-
-  componentDidMount() {
-    this.getLangs();
+    this.setState({langs: Object.entries(data.translation)});
   }
 
   render() {

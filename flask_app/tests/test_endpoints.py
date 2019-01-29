@@ -28,21 +28,37 @@ def test_registration(app) -> None:
     body = json.loads(no_username.data.decode("utf-8"))
     assert "This field cannot be blank" == body["message"].get("username")
 
+    bad_username = client().post(
+        "/registration", data={"username": "bob", "password": "hunter2hunter222"}
+    )
+    assert 400 == bad_username.status_code
+    body = json.loads(bad_username.data.decode("utf-8"))
+    assert "Invalid email address" == body["message"]
+
+    bad_password = client().post(
+        "/registration", data={"username": "bob@bob.com", "password": "hunter2"}
+    )
+    assert 400 == bad_password.status_code
+    body = json.loads(bad_password.data.decode("utf-8"))
+    assert "Invalid password" == body["message"]
+
     bob = client().post(
-        "/registration", data={"username": "bob", "password": "hunter2"}
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     assert 201 == bob.status_code
     body = json.loads(bob.data.decode("utf-8"))
-    assert "User bob was created" == body["message"]
+    assert "User bob@bob.com was created" == body["message"]
     assert body["access_token"] is not None
     assert body["refresh_token"] is not None
 
     duplicate_bob = client().post(
-        "/registration", data={"username": "bob", "password": "hunter2"}
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     assert 400 == duplicate_bob.status_code
     body = json.loads(duplicate_bob.data.decode("utf-8"))
-    assert "User bob already exists" == body["message"]
+    assert "User bob@bob.com already exists" == body["message"]
 
 
 def test_login(app) -> None:
@@ -53,11 +69,14 @@ def test_login(app) -> None:
     data = {}
     no_data = client().post("/login", data=data)
     assert no_data.status_code == 400
-    client().post("/registration", data={"username": "bob", "password": "hunter2"})
-    data = {"username": "bob", "password": ""}
+    client().post(
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    data = {"username": "bob@bob.com", "password": ""}
     bad_pw = client().post("/login", data=data)
     assert bad_pw.status_code == 400
-    data["password"] = "hunter2"
+    data["password"] = "hunter2hunter222"
     success = client().post("/login", data=data)
     assert success.status_code == 200
     body = json.loads(success.data.decode("utf-8"))
@@ -73,7 +92,8 @@ def test_logout_access(app) -> None:
     no_token = client().post("/logout/access")
     assert 401 == no_token.status_code
     bob = client().post(
-        "/registration", data={"username": "bob", "password": "hunter2"}
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]
@@ -94,7 +114,8 @@ def test_logout_refresh(app) -> None:
     no_token = client().post("/logout/access")
     assert 401 == no_token.status_code
     bob = client().post(
-        "/registration", data={"username": "bob", "password": "hunter2"}
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     refresh_token = body["refresh_token"]
@@ -113,7 +134,8 @@ def test_refresh_access(app) -> None:
     """
     client = app.test_client
     bob = client().post(
-        "/registration", data={"username": "bob", "password": "hunter2"}
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]

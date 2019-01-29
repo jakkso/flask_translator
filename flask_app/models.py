@@ -2,6 +2,7 @@
 Contains database models
 """
 from passlib.hash import pbkdf2_sha256 as sha256
+import re
 
 from flask_app import db
 
@@ -44,6 +45,26 @@ class UserModel(db.Model):
     @staticmethod
     def verify_hash(password, hash_):
         return sha256.verify(password, hash_)
+
+    def validate_username(self) -> bool:
+        """
+        The email RFC is absurdly complicated and trying to 'properly' parse it
+        can require a regex thousands of characters long and I don't care to do that.
+        Better to have a loose interpretation, plus, the user ought to activate their
+        account so they'll have to enter a valid email address in order to be
+        contacted.
+        """
+        pattern = r"[^@]+@[^@]+\.[^@]+"
+        return bool(re.match(pattern, self.username))
+
+    @staticmethod
+    def validate_password(password) -> bool:
+        """
+        Basic password validation
+        at least one letter and number, 14 characters in length
+        """
+        pattern = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{14,}$"
+        return bool(re.match(pattern, password))
 
 
 class RevokedTokenModel(db.Model):

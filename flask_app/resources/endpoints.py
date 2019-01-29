@@ -28,12 +28,14 @@ class UserRegistration(Resource):
         data = parser.parse_args()
         if UserModel.find_by_username(data["username"]):
             return {"message": f'User {data["username"]} already exists'}, 400
-
         new_user = UserModel(
             username=data["username"],
             password=UserModel.generate_hash(data["password"]),
         )
-
+        if not new_user.validate_username():
+            return {"message": "Invalid email address"}, 400
+        if not UserModel.validate_password(data["password"]):
+            return {"message": "Invalid password"}, 400
         try:
             new_user.save_to_db()
             access_token = create_access_token(identity=data["username"])
@@ -112,5 +114,5 @@ class SecretResource(Resource):
         response = translate(text=data["text"], src=data["from"], target=data["to"])
         if isinstance(response, list):  # Successful responses are lists of dicts
             return response, 200
-        elif response['error']:
-            return {'error': 'Internal Service Error'}, 500
+        elif response["error"]:
+            return {"error": "Internal Service Error"}, 500

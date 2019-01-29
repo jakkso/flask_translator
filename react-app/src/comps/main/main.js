@@ -1,9 +1,7 @@
 import React from 'react';
 
-import './main.css'
-
+import Auth from '../auth/auth';
 import Bubble from '../notification/notification';
-import SignIn from '../auth/auth';
 import TitleBar from '../titleBar/titleBar';
 import Translate from '../translate/translate';
 
@@ -13,17 +11,14 @@ export default class MainView extends React.Component {
     this.baseUrl = 'http://localhost:5000/';
 
     // Bind instance methods
-    this.onAuthChange = this.onAuthChange.bind(this);
-    this.onAuthSubmit = this.onAuthSubmit.bind(this);
-    this.refreshAccessToken = this.refreshAccessToken.bind(this);
+    this.errMsg = this.errMsg.bind(this);
     this.logout = this.logout.bind(this);
+    this.refreshAccessToken = this.refreshAccessToken.bind(this);
     this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
+    this.submitAuthRequest = this.submitAuthRequest.bind(this);
 
     // State construction
     this.state = {
-      username: '',
-      password: '',
-      checkbox: false,
       errText: '',
       accessToken: null,
       refreshToken: null,
@@ -32,63 +27,44 @@ export default class MainView extends React.Component {
   }
 
   /**
-   * Handler for managing user input on auth components
-   * @param event
+   *
+   * @param errText {string}
    */
-  onAuthChange(event) {
-    switch (event.target.id) {
-      case 'username':
-        return this.setState({username: event.target.value});
-      case 'password':
-        return this.setState({password: event.target.value});
-      case 'registrationCheckbox':
-        return this.setState(prevState => {
-          return {checkbox: !prevState.checkbox}
-        });
-      default:
-        return;
-    }
+  errMsg(errText) {
+    this.setState({errText})
   }
 
   /**
-   * Handles logging in / registration calls
-   * @param event
+   *
+   * @param creds {object} containing username, password and registration attributes
+   * @return {Promise<void>}
    */
-  async onAuthSubmit(event) {
-    event.preventDefault();
-    let url;
-    const {username, password, checkbox} = this.state;
-    const body = JSON.stringify({username: username, password: password});
+  async submitAuthRequest(creds) {
+    const url = creds.registration ? this.baseUrl + 'registration': this.baseUrl + 'login';
+    const body = JSON.stringify({username: creds.username, password: creds.password});
     const headers = {"Content-Type": 'application/json'};
-    const fetchOptions = {
+    const options = {
       method: 'POST',
       mode: 'cors',
       headers: headers,
       body: body
     };
-    if (checkbox) {
-      url = this.baseUrl + 'registration';
-    } else {
-      url = this.baseUrl + 'login';
-    }
-    if (!username || !password) return;
-    const resp = await fetch(url, fetchOptions);
-    const data = await resp.json();  // resolve the promise returned by fetch
-    if (data.message === `User ${username} already exists`) {
-      return this.setState({errText: data.message});
-    } else if (data.message === 'Bad credentials' || data.message === `User ${username} does not exist`) {
-      return this.setState({errText: 'Bad username or password'});
-    } else if (data.message === `Logged in as ${username}` || data.message === `User ${username} was created`) {
+
+    const resp = await fetch(url, options);
+    const data = await resp.json();
+    if (data.message === `User ${creds.username} already exists`) {
+      return this.errMsg(data.message);
+    } else if (data.message === 'Bad credentials' || data.message === `User ${creds.username} does not exist`) {
+      return this.errMsg('Bad username or password')
+    } else if (data.message === `Logged in as ${creds.username}` || data.message === `User ${creds.username} was created`) {
       if (data.access_token && data.refresh_token) {
-        this.setState({username: '', password: ''});
-        return this.setState({
+        this.setState({
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
           errText: ''
         });
-      } else {
-        return this.setState({username: '', password: '', errText: 'Authentication failure, please try again later'})
-      }
+        return true;
+      } else return this.errMsg('Authentication failure, please try again later');
     }
   }
 
@@ -172,18 +148,13 @@ export default class MainView extends React.Component {
   }
 
   render() {
-    const {accessToken, refreshToken, username, password, errText} = this.state;
+    const {accessToken, refreshToken, errText} = this.state;
     const loggedIn = accessToken && refreshToken;
     const translator = loggedIn ?
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
     const error = errText ? <Bubble message={errText} clearText={()=> this.setState({errText: ''})} /> : null;
-    const signIn = loggedIn ? null : <SignIn
-      username={username}
-      password={password}
-      onChange={this.onAuthChange}
-      onSubmit={this.onAuthSubmit}
-    />;
+    const signIn = loggedIn ? null : <Auth submitAuth={this.submitAuthRequest} errMsg={this.errMsg}/>;
       return (
         <div>
           <TitleBar/>
