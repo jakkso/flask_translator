@@ -6,6 +6,7 @@ Contain tests for API endpoints
 import json
 
 from flask_app.tests import app
+from flask_app.token import token
 
 
 def test_registration(app) -> None:
@@ -49,8 +50,6 @@ def test_registration(app) -> None:
     assert 201 == bob.status_code
     body = json.loads(bob.data.decode("utf-8"))
     assert "User bob@bob.com was created" == body["message"]
-    assert body["access_token"] is not None
-    assert body["refresh_token"] is not None
 
     duplicate_bob = client().post(
         "/registration",
@@ -59,6 +58,42 @@ def test_registration(app) -> None:
     assert 400 == duplicate_bob.status_code
     body = json.loads(duplicate_bob.data.decode("utf-8"))
     assert "User bob@bob.com already exists" == body["message"]
+
+
+def test_activate(app) -> None:
+    """
+    Tests activation functionality
+    """
+    client = app.test_client
+    client().post(
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    # Good request
+    resp = client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    )
+    assert 201 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert "User bob@bob.com has been verified" == body["message"]
+    # Already activated email
+    resp = client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    )
+    assert 200 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert "User already verified" == body["message"]
+    # Bad token
+    resp = client().post("/activate", data={"token": ""})
+    assert 400 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert "Confirmation link has expired or is invalid" == body["message"]
+    bad_email = token.generate_confirmation_token("not_bob@bob.com")
+    # Unregistered email
+    resp = client().post("/activate", data={"token": bad_email})
+    assert 400 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert "User not_bob@bob.com does not exist" == body["message"]
 
 
 def test_login(app) -> None:
@@ -72,6 +107,9 @@ def test_login(app) -> None:
     client().post(
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     data = {"username": "bob@bob.com", "password": ""}
     bad_pw = client().post("/login", data=data)
@@ -91,9 +129,15 @@ def test_logout_access(app) -> None:
     client = app.test_client
     no_token = client().post("/logout/access")
     assert 401 == no_token.status_code
-    bob = client().post(
+    client().post(
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    )
+    bob = client().post(
+        "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]
@@ -113,9 +157,15 @@ def test_logout_refresh(app) -> None:
     client = app.test_client
     no_token = client().post("/logout/access")
     assert 401 == no_token.status_code
-    bob = client().post(
+    client().post(
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    )
+    bob = client().post(
+        "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
     )
     body = json.loads(bob.data.decode("utf-8"))
     refresh_token = body["refresh_token"]
@@ -133,9 +183,15 @@ def test_refresh_access(app) -> None:
     Tests refreshing access token functionality
     """
     client = app.test_client
-    bob = client().post(
+    client().post(
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    client().post(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    )
+    bob = client().post(
+        "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]

@@ -12,6 +12,7 @@ from flask_restful import Resource, reqparse
 
 from flask_app.models import RevokedTokenModel, UserModel
 from flask_app.resources.translate import translate
+from flask_app.token import token
 
 parser = reqparse.RequestParser()
 parser.add_argument("username", help="This field cannot be blank", required=True)
@@ -21,6 +22,9 @@ translator = reqparse.RequestParser()
 translator.add_argument("text", help="This field cannot be blank", required=True)
 translator.add_argument("from", help="This field cannot be blank", required=True)
 translator.add_argument("to", help="This field cannot be blank", required=True)
+
+activate = reqparse.RequestParser()
+activate.add_argument("token", help="This field cannot be blank", required=True)
 
 
 class UserRegistration(Resource):
@@ -39,28 +43,37 @@ class UserRegistration(Resource):
             return {"message": "Invalid password"}, 400
         try:
             new_user.save_to_db()
-            access_token = create_access_token(identity=data["username"])
-            refresh_token = create_refresh_token(identity=data["username"])
-            return (
-                {
-                    "message": f'User {data["username"]} was created',
-                    "access_token": access_token,
-                    "refresh_token": refresh_token,
-                },
-                201,
-            )
+            # TODO Need to send activation email here.
+            return {"message": f'User {data["username"]} was created'}, 201
         except:
             return {"message": "Something went wrong"}, 500
+
+
+class UserActivation(Resource):
+    def post(self):
+        data = activate.parse_args()
+        token_ = data["token"]
+        email = token.confirm_token(token_)
+        if not email:
+            return {"message": "Confirmation link has expired or is invalid"}, 400
+        user = UserModel.find_by_username(email)
+        if not user:
+            return {"message": f"User {email} does not exist"}, 400
+        if user.email_verified:
+            return {"message": "User already verified"}, 200
+        user.email_verified = True
+        user.save_to_db()
+        return {"message": f"User {email} has been verified"}, 201
 
 
 class UserLogin(Resource):
     def post(self):
         data = parser.parse_args()
         current_user = UserModel.find_by_username(data["username"])
-
         if not current_user:
             return {"message": f"User {data['username']} does not exist"}, 400
-
+        if not current_user.email_verified:
+            return {"message": f"Unverified email address"}, 400
         if UserModel.verify_hash(data["password"], current_user.password):
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])

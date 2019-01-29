@@ -37,7 +37,7 @@ def create_app(test_config=None) -> Flask:
         db.init_app(app)
         db.create_all()
         jwt.init_app(app)
-        migrate = Migrate(app, db)
+        Migrate(app, db)
     api = Api(app)
     CORS(app)
     api.add_resource(endpoints.UserRegistration, "/registration")
@@ -46,4 +46,5 @@ def create_app(test_config=None) -> Flask:
     api.add_resource(endpoints.UserLogoutRefresh, "/logout/refresh")
     api.add_resource(endpoints.TokenRefresh, "/token/refresh")
     api.add_resource(endpoints.SecretResource, "/translate")
+    api.add_resource(endpoints.UserActivation, "/activate")
     return app

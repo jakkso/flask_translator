@@ -20,3 +20,5 @@ class Config:
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ["access", "refresh"]
     TRANSLATE_API_KEY = env.get("text_translate_key")
+    SECURITY_SALT = env.get('password_salt')
+
