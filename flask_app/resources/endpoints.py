@@ -31,6 +31,7 @@ class UserRegistration(Resource):
         new_user = UserModel(
             username=data["username"],
             password=UserModel.generate_hash(data["password"]),
+            email_verified=False,
         )
         if not new_user.validate_username():
             return {"message": "Invalid email address"}, 400
