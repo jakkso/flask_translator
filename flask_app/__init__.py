@@ -37,7 +37,7 @@ def create_app(test_config=None) -> Flask:
         db.init_app(app)
         db.create_all()
         jwt.init_app(app)
-    migrate = Migrate(app)
+        migrate = Migrate(app, db)
     api = Api(app)
     CORS(app)
     api.add_resource(endpoints.UserRegistration, "/registration")
