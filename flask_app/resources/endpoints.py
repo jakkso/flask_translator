@@ -83,7 +83,7 @@ class UserLogin(Resource):
         if not current_user:
             return {"message": f"User {data['username']} does not exist"}, 400
         if not current_user.email_verified:
-            return {"message": f"Unverified email address"}, 400
+            return {"message": f"Unverified email address"}, 401
         if UserModel.verify_hash(data["password"], current_user.password):
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])

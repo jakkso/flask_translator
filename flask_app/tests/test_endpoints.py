@@ -110,6 +110,11 @@ def test_login(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
+    unverified = client().post('/login',
+                               data={"username": "bob@bob.com", "password": "hunter2hunter222"})
+    assert unverified.status_code == 401
+    body = json.loads(unverified.data.decode("utf-8"))
+    assert body['message'] == 'Unverified email address'
     client().get(
         "/activate",
         query_string={"token": token.generate_confirmation_token("bob@bob.com")},
