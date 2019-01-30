@@ -4,14 +4,17 @@ Contains app creation functionality
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 
 from settings import Config
 
+
 db = SQLAlchemy()
 jwt = JWTManager()
+mail = Mail()
 
 
 @jwt.token_in_blacklist_loader
@@ -36,10 +39,11 @@ def create_app(test_config=None) -> Flask:
     with app.app_context():
         db.init_app(app)
         db.create_all()
-        jwt.init_app(app)
-        Migrate(app, db)
     api = Api(app)
     CORS(app)
+    jwt.init_app(app)
+    mail.init_app(app)
+    Migrate(app, db)
     api.add_resource(endpoints.UserRegistration, "/registration")
     api.add_resource(endpoints.UserLogin, "/login")
     api.add_resource(endpoints.UserLogoutAccess, "/logout/access")

@@ -70,27 +70,29 @@ def test_activate(app) -> None:
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     # Good request
-    resp = client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    resp = client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     assert 201 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User bob@bob.com has been verified" == body["message"]
     # Already activated email
-    resp = client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    resp = client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     assert 200 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User already verified" == body["message"]
     # Bad token
-    resp = client().post("/activate", data={"token": ""})
-    assert 400 == resp.status_code
+    resp = client().get("/activate", data={"token": ""})
+    assert 406 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "Confirmation link has expired or is invalid" == body["message"]
     bad_email = token.generate_confirmation_token("not_bob@bob.com")
     # Unregistered email
-    resp = client().post("/activate", data={"token": bad_email})
+    resp = client().get("/activate", data={"token": bad_email})
     assert 400 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User not_bob@bob.com does not exist" == body["message"]
@@ -108,8 +110,9 @@ def test_login(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     data = {"username": "bob@bob.com", "password": ""}
     bad_pw = client().post("/login", data=data)
@@ -133,8 +136,9 @@ def test_logout_access(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -161,8 +165,9 @@ def test_logout_refresh(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -187,8 +192,9 @@ def test_refresh_access(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().post(
-        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
+    client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}

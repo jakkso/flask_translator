@@ -1,3 +1,8 @@
+"""
+Contains API endpoint definitions
+"""
+
+from flask import render_template, url_for
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -10,6 +15,7 @@ from jwt import ExpiredSignatureError
 
 from flask_restful import Resource, reqparse
 
+from flask_app.email.email import send_email
 from flask_app.models import RevokedTokenModel, UserModel
 from flask_app.resources.translate import translate
 from flask_app.token import token
@@ -42,20 +48,24 @@ class UserRegistration(Resource):
         if not UserModel.validate_password(data["password"]):
             return {"message": "Invalid password"}, 400
         try:
+            token_ = token.generate_confirmation_token(new_user.username)
+            confirm_url = url_for("useractivation", token=token_, _external=True)
+            subject = "Please confirm your email address"
+            html = render_template("activate.html", confirm_url=confirm_url)
+            send_email(new_user.username, subject, html)
             new_user.save_to_db()
-            # TODO Need to send activation email here.
             return {"message": f'User {data["username"]} was created'}, 201
         except:
             return {"message": "Something went wrong"}, 500
 
 
 class UserActivation(Resource):
-    def post(self):
+    def get(self):
         data = activate.parse_args()
         token_ = data["token"]
         email = token.confirm_token(token_)
         if not email:
-            return {"message": "Confirmation link has expired or is invalid"}, 400
+            return {"message": "Confirmation link has expired or is invalid"}, 406
         user = UserModel.find_by_username(email)
         if not user:
             return {"message": f"User {email} does not exist"}, 400
