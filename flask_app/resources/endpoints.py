@@ -75,6 +75,23 @@ class UserActivation(Resource):
         user.save_to_db()
         return {"message": f"User {email} has been verified"}, 201
 
+    def post(self):
+        data = parser.parse_args()
+        current_user = UserModel.find_by_username(data['username'])
+        if not current_user:
+            return {"message": f"User {data['username']} does not exist"}, 400
+        if UserModel.verify_hash(data['password'], current_user.password):
+            if current_user.email_verified:
+                return {"message": f"User {data['username']} already verified"}, 400
+            else:
+                token_ = token.generate_confirmation_token(current_user.username)
+                confirm_url = url_for("useractivation", token=token_, _external=True)
+                subject = "Please confirm your email address"
+                html = render_template("activate.html", confirm_url=confirm_url)
+                send_email(current_user.username, subject, html)
+                return {"message": "Verification email sent"}, 201
+        return {"message": "Bad credentials"}, 400
+
 
 class UserLogin(Resource):
     def post(self):

@@ -12,6 +12,8 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import withStyles from '@material-ui/core/styles/withStyles';
 
+import Unverified from './unactivated';
+
 const styles = theme => ({
   main: {
     width: 'auto',
@@ -63,6 +65,7 @@ class Auth extends React.Component {
     registration: false,
     userErr: false,
     pwErr: false,
+    unverified: false,
   };
 
   onChange = (event) => {
@@ -74,7 +77,7 @@ class Auth extends React.Component {
   };
 
   handleClose = () => {
-    this.setState({registration: false})
+    this.setState({registration: false, unverified: false})
   };
 
   validateUsername() {
@@ -110,7 +113,8 @@ class Auth extends React.Component {
     if (registration) {
       if (!this.validatePassword() || !this.validateUsername()) return;
     }
-    if (submitAuth({username: username, password: password, registration: registration})) {
+    const resp = submitAuth({username: username, password: password, registration: registration});
+    if (resp.success) {
       this.setState({
         username: '',
         password: '',
@@ -119,11 +123,21 @@ class Auth extends React.Component {
         userErr: false,
         pwErr: false,})
     }
+    else if (resp.msg === 'Unverified email address') {
+      this.setState({unverified: true})
+    }
   };
 
   render() {
     const {classes} = this.props;
-    const {username, password, password2, registration} = this.state;
+    const {username, password, password2, registration, unverified} = this.state;
+    const verificationModal = unverified ?
+      <Unverified
+        username={username}
+        sendReq={console.log}
+        onClose={this.handleClose}
+      />
+      :null;
     return (
       <main className={classes.main}>
         <CssBaseline />

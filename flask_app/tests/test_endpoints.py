@@ -60,9 +60,9 @@ def test_registration(app) -> None:
     assert "User bob@bob.com already exists" == body["message"]
 
 
-def test_activate(app) -> None:
+def test_activate_get(app) -> None:
     """
-    Tests activation functionality
+    Tests activation functionality get request
     """
     client = app.test_client
     client().post(
@@ -96,6 +96,44 @@ def test_activate(app) -> None:
     assert 400 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User not_bob@bob.com does not exist" == body["message"]
+
+
+def test_activate_post(app) -> None:
+    """
+    Test activation post request
+    """
+    data = {'username': '', 'password': ''}
+    client = app.test_client
+    client().post(
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    resp = client().post('/activate',
+                         data=data)
+    body = json.loads(resp.data.decode("utf-8"))
+    assert 400 == resp.status_code
+    assert 'User  does not exist' == body['message']
+    data['username'] = 'bob@bob.com'
+    resp = client().post('/activate',
+                         data=data)
+    body = json.loads(resp.data.decode("utf-8"))
+    assert resp.status_code == 400
+    assert body['message'] == 'Bad credentials'
+    data['password'] = 'hunter2hunter222'
+    resp = client().post('/activate',
+                         data=data)
+    body = json.loads(resp.data.decode("utf-8"))
+    assert 201 == resp.status_code
+    assert 'Verification email sent' == body['message']
+    client().get(
+        "/activate",
+        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    )
+    resp = client().post('/activate',
+                         data=data)
+    body = json.loads(resp.data.decode("utf-8"))
+    assert 400 == resp.status_code
+    assert 'User bob@bob.com already verified' == body['message']
 
 
 def test_login(app) -> None:

@@ -4,6 +4,7 @@ import Auth from '../auth/auth';
 import Bubble from '../notification/notification';
 import TitleBar from '../titleBar/titleBar';
 import Translate from '../translate/translate';
+import Unverified from '../auth/unactivated';
 
 export default class MainView extends React.Component {
   constructor(props) {
@@ -52,10 +53,15 @@ export default class MainView extends React.Component {
 
     const resp = await fetch(url, options);
     const data = await resp.json();
+    const res = {success: null, msg: null};
     if (data.message === `User ${creds.username} already exists`) {
       return this.errMsg(data.message);
     } else if (data.message === 'Bad credentials' || data.message === `User ${creds.username} does not exist`) {
-      return this.errMsg('Bad username or password')
+      this.errMsg('Bad username or password');
+      res.success = false;
+    } else if (data.message === 'Unverified email address') {
+      res.success = false;
+      res.msg = data.message;
     } else if (data.message === `Logged in as ${creds.username}` || data.message === `User ${creds.username} was created`) {
       if (data.access_token && data.refresh_token) {
         this.setState({
@@ -63,9 +69,14 @@ export default class MainView extends React.Component {
           refreshToken: data.refresh_token,
           errText: ''
         });
-        return true;
-      } else return this.errMsg('Authentication failure, please try again later');
+        res.success = true;
+      }
+    } else {
+      this.errMsg('Authentication failure, please try again later');
+      res.success = false;
+      res.msg = 'Authentication failure, please try again later';
     }
+    return res;
   }
 
   /**
@@ -157,10 +168,10 @@ export default class MainView extends React.Component {
     const signIn = loggedIn ? null : <Auth submitAuth={this.submitAuthRequest} errMsg={this.errMsg}/>;
       return (
         <div>
-          <TitleBar/>
+          {/*<TitleBar/>*/}
           {signIn}
-          {translator}
-          {error}
+          {/*{translator}*/}
+          {/*{error}*/}
         </div>
     )
   }
