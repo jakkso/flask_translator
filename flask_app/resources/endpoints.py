@@ -77,10 +77,10 @@ class UserActivation(Resource):
 
     def post(self):
         data = parser.parse_args()
-        current_user = UserModel.find_by_username(data['username'])
+        current_user = UserModel.find_by_username(data["username"])
         if not current_user:
             return {"message": f"User {data['username']} does not exist"}, 400
-        if UserModel.verify_hash(data['password'], current_user.password):
+        if UserModel.verify_hash(data["password"], current_user.password):
             if current_user.email_verified:
                 return {"message": f"User {data['username']} already verified"}, 400
             else:
