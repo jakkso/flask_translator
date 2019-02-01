@@ -4,7 +4,6 @@ import Auth from '../auth/auth';
 import Bubble from '../notification/notification';
 import TitleBar from '../titleBar/titleBar';
 import Translate from '../translate/translate';
-import Unverified from '../auth/unactivated';
 
 export default class MainView extends React.Component {
   constructor(props) {
@@ -168,10 +167,10 @@ export default class MainView extends React.Component {
     const signIn = loggedIn ? null : <Auth submitAuth={this.submitAuthRequest} errMsg={this.errMsg}/>;
       return (
         <div>
-          {/*<TitleBar/>*/}
+          <TitleBar/>
           {signIn}
-          {/*{translator}*/}
-          {/*{error}*/}
+          {translator}
+          {error}
         </div>
     )
   }

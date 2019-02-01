@@ -57,14 +57,15 @@ const styles = theme => ({
   },
 });
 
+
+
+
 class Auth extends React.Component {
   state = {
     username: '',
     password: '',
     password2: '',
     registration: false,
-    userErr: false,
-    pwErr: false,
     unverified: false,
   };
 
@@ -77,14 +78,14 @@ class Auth extends React.Component {
   };
 
   handleClose = () => {
-    this.setState({registration: false, unverified: false})
+    this.setState({registration: false})
   };
 
   validateUsername() {
     const {username} = this.state;
     const {errMsg} = this.props;
     const re = /[^@]+@[^@]+\.[^@]+/;
-    if (! re.test(username)) {
+    if (!re.test(username)) {
       errMsg('Invalid email address');
       return false;
     }
@@ -105,7 +106,17 @@ class Auth extends React.Component {
     return true;
   }
 
-  onSubmit = (event) => {
+  clearState = () => {
+    this.setState({
+      username: '',
+      password: '',
+      password2: '',
+      registration: false,
+      unverified: false,
+    })
+  };
+
+  onSubmit = async (event) => {
     event.preventDefault();
     const {username, password, registration} = this.state;
     const {submitAuth, errMsg} = this.props;
@@ -113,17 +124,10 @@ class Auth extends React.Component {
     if (registration) {
       if (!this.validatePassword() || !this.validateUsername()) return;
     }
-    const resp = submitAuth({username: username, password: password, registration: registration});
+    const resp = await submitAuth({username: username, password: password, registration: registration});
     if (resp.success) {
-      this.setState({
-        username: '',
-        password: '',
-        password2: '',
-        registration: false,
-        userErr: false,
-        pwErr: false,})
-    }
-    else if (resp.msg === 'Unverified email address') {
+      this.clearState();
+    } else if (resp.msg === 'Unverified email address') {
       this.setState({unverified: true})
     }
   };
@@ -131,13 +135,15 @@ class Auth extends React.Component {
   render() {
     const {classes} = this.props;
     const {username, password, password2, registration, unverified} = this.state;
-    const verificationModal = unverified ?
-      <Unverified
-        username={username}
-        sendReq={console.log}
-        onClose={this.handleClose}
-      />
-      :null;
+    if (unverified) {
+      return (
+        <Unverified
+          username={username}
+          sendReq={console.log}
+          logout={this.clearState}
+        />
+      )
+    }
     return (
       <main className={classes.main}>
         <CssBaseline />
