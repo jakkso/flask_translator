@@ -79,9 +79,10 @@ class Auth extends React.Component {
    */
   activationHandler = async (token) => {
     const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({token: token}, 'user/activate', {}, 'PUT');
-    if (resp.message.includes('has been verified')) this.clearState();
-    createSnackbar(resp.message)
+    const resp = await this.props.sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
+    if (resp.msg) createSnackbar('Link invalid or expired');
+    else if (resp.message) createSnackbar(resp.message);
+    this.clearState();
   };
 
   /**
@@ -166,8 +167,9 @@ class Auth extends React.Component {
     const {passwordResetToken, password} = this.state;
     const {createSnackbar} = this.props;
     if (!this.validatePassword()) return;
-    const resp = await this.props.sendRequest({token: passwordResetToken, password: password}, 'user/reset_password', {}, 'PUT');
-    createSnackbar(resp.message);
+    const resp = await this.props.sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
+    if (resp.msg) createSnackbar('Link invalid or expired');
+    else if (resp.message) createSnackbar(resp.message);
     this.clearState();
   };
 
