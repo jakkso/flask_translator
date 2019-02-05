@@ -6,39 +6,28 @@ import TitleBar from '../titleBar/titleBar';
 import Translate from '../translate/translate';
 
 export default class MainView extends React.Component {
-  constructor(props) {
-    super(props);
-    this.baseUrl = 'http://localhost:5000/';
-
-    // Bind instance methods
-    this.createSnackbar = this.createSnackbar.bind(this);
-    this.logout = this.logout.bind(this);
-    this.refreshAccessToken = this.refreshAccessToken.bind(this);
-    this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
-
-    // State construction
-    this.state = {
-      infoText: '',
-      accessToken: null,
-      refreshToken: null,
-      langs: null,
-    }
-  }
+  baseUrl = 'http://localhost:5000/';
+  state = {
+    infoText: '',
+    accessToken: null,
+    refreshToken: null,
+    langs: null,
+  };
 
   /**
    *
    * @param text {string}
    */
-  createSnackbar(text) {
+  createSnackbar = (text) => {
     this.setState({infoText: text})
-  }
+  };
 
   /**
    * Access tokens expire after 15 min, this method retrieves a new one using refresh
    * token.  If the refresh attempt fails, log out user
    * @return {boolean}
    */
-  async refreshAccessToken() {
+  refreshAccessToken = async () => {
     const {refreshToken} = this.state;
     const url = this.baseUrl + 'token/refresh';
     const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${refreshToken}`};
@@ -58,8 +47,13 @@ export default class MainView extends React.Component {
       this.createSnackbar('Please log in again.');
       return false;
     }
-  }
+  };
 
+  /**
+   * Token setter, used by Auth child component.
+   * @param accessToken
+   * @param refreshToken
+   */
   setTokens = (accessToken, refreshToken) => {
     this.setState({accessToken, refreshToken})
   };
@@ -70,7 +64,7 @@ export default class MainView extends React.Component {
    * @param text Text to translate
    * @return {Promise<*>}
    */
-  async sendTranslateRequest(sourceLang, targetLang, text) {
+  sendTranslateRequest = async (sourceLang, targetLang, text) => {
     const translateURL = this.baseUrl + 'translate';
     const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.accessToken}`};
     const body = {text: text, to: targetLang, from: sourceLang};
@@ -93,14 +87,13 @@ export default class MainView extends React.Component {
     } else if (data[0]){
       return data[0];
     }
-  }
+  };
 
   /**
    * Invalidates refresh and access tokens via API calls, removes them from state
    * @param event
    */
-  async logout(event) {
-    // Can also be called by refreshAccessToken, which doesn't call with event param
+  logout = async (event) => {
     if (event) event.preventDefault();
     const logoutURL = this.baseUrl + 'logout/';
     const {accessToken, refreshToken} = this.state;
@@ -114,7 +107,7 @@ export default class MainView extends React.Component {
     await fetch(logoutURL + 'access', options);
     options.headers['Authorization'] = `Bearer ${refreshToken}`;
     await fetch(logoutURL + 'refresh', options);
-  }
+  };
 
   render() {
     const {accessToken, refreshToken, infoText} = this.state;
