@@ -5,7 +5,7 @@ Contain tests for API endpoints
 """
 import json
 
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token
 
 from flask_app.tests import app
 from flask_app.resources.endpoints import generate_activation_url
