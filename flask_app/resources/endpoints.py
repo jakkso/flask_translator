@@ -67,7 +67,9 @@ class UserActivation(Resource):
     def post(self):
         data = login.parse_args()
         current_user = UserModel.find_by_username(data["username"])
-        if not current_user or not UserModel.verify_hash(data["password"], current_user.password):
+        if not current_user or not UserModel.verify_hash(
+            data["password"], current_user.password
+        ):
             return {"message": "Bad credentials"}, 400
         elif current_user.email_verified:
             return {"message": f"User {data['username']} already verified"}, 400
@@ -99,7 +101,7 @@ class UserLogin(Resource):
     def post(self):
         data = login.parse_args()
         user = UserModel.find_by_username(data["username"])
-        if not user or not UserModel.verify_hash(data['password'], user.password):
+        if not user or not UserModel.verify_hash(data["password"], user.password):
             return {"message": "Bad credentials"}, 400
         elif not user.email_verified:
             return {"message": f"Unverified email address"}, 401
@@ -157,7 +159,7 @@ class UserResetPassword(Resource):
         data = pw_req.parse_args()
         password = data["password"]
         token = get_raw_jwt()
-        username = token['identity']
+        username = token["identity"]
         user = UserModel.find_by_username(username)
         if not user or not username:
             return {"message": "Invalid username"}, 400
