@@ -43,10 +43,10 @@ class UserModel(db.Model):
     def delete_user(cls, username):
         user = cls.query.filter_by(username=username).first()
         if not user:
-            return {'message': 'User not found'}
+            return {"message": "User not found"}
         db.session.delete(user)
         db.session.commit()
-        return {'message': f'User {username} deleted'}
+        return {"message": f"User {user.username} deleted"}
 
     @staticmethod
     def generate_hash(password):

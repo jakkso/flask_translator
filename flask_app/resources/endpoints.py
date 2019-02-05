@@ -21,9 +21,9 @@ from flask_app.resources.translate import translate
 from flask_app.token import token
 from settings import Config
 
-parser = reqparse.RequestParser()
-parser.add_argument("username", help="This field cannot be blank", required=True)
-parser.add_argument("password", help="This field cannot be blank", required=True)
+login = reqparse.RequestParser()
+login.add_argument("username", help="This field cannot be blank", required=True)
+login.add_argument("password", help="This field cannot be blank", required=True)
 
 translator = reqparse.RequestParser()
 translator.add_argument("text", help="This field cannot be blank", required=True)
@@ -43,7 +43,7 @@ pw_reset_req.add_argument("username", help="This field cannot be blank", require
 
 class UserRegistration(Resource):
     def post(self):
-        data = parser.parse_args()
+        data = login.parse_args()
         if UserModel.find_by_username(data["username"]):
             return {"message": f'User {data["username"]} already exists'}, 400
         new_user = UserModel(
@@ -69,7 +69,7 @@ class UserRegistration(Resource):
 
 class UserActivation(Resource):
     def post(self):
-        data = parser.parse_args()
+        data = login.parse_args()
         current_user = UserModel.find_by_username(data["username"])
         if not current_user:
             return {"message": "Bad credentials"}, 400
@@ -103,7 +103,7 @@ class UserActivation(Resource):
 
 class UserLogin(Resource):
     def post(self):
-        data = parser.parse_args()
+        data = login.parse_args()
         current_user = UserModel.find_by_username(data["username"])
         if not current_user:
             return {"message": "Bad credentials"}, 400
@@ -177,6 +177,16 @@ class UserResetPassword(Resource):
         user.password = UserModel.generate_hash(password)
         user.save_to_db()
         return {"message": "Password updated"}, 201
+
+
+class UserDeletion(Resource):
+    def delete(self):
+        data = login.parse_args()
+        username, password = data["username"], data["password"]
+        user = UserModel.find_by_username(username)
+        if not user or not UserModel.verify_hash(password, user.password):
+            return {"message": "Bad credentials"}, 400
+        return UserModel.delete_user(username), 202
 
 
 class TokenRefresh(Resource):

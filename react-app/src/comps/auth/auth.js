@@ -79,7 +79,7 @@ class Auth extends React.Component {
    */
   activationHandler = async (token) => {
     const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({token: token}, 'activate', {}, 'PUT');
+    const resp = await this.props.sendRequest({token: token}, 'user/activate', {}, 'PUT');
     if (resp.message.includes('has been verified')) this.clearState();
     createSnackbar(resp.message)
   };
@@ -129,7 +129,7 @@ class Auth extends React.Component {
     const {username, password} = this.state;
     const {createSnackbar, setTokens} = this.props;
     if (!username || !password) return createSnackbar('Username and password required');
-    const resp = await this.props.sendRequest({username: username, password: password}, 'login');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'user/login');
     switch (resp.message) {
       case 'Bad credentials':
         return createSnackbar('Bad username or password');
@@ -152,7 +152,7 @@ class Auth extends React.Component {
     if (!this.validatePassword() || !this.validateUsername()) return;
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({username: username, password: password}, 'registration');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'user/registration');
     if (resp.message === `User ${username} was created`) this.setState({unactivated: true});
     return createSnackbar(resp.message);
   };
@@ -166,7 +166,7 @@ class Auth extends React.Component {
     const {passwordResetToken, password} = this.state;
     const {createSnackbar} = this.props;
     if (!this.validatePassword()) return;
-    const resp = await this.props.sendRequest({token: passwordResetToken, password: password}, 'reset_password', {}, 'PUT');
+    const resp = await this.props.sendRequest({token: passwordResetToken, password: password}, 'user/reset_password', {}, 'PUT');
     createSnackbar(resp.message);
     this.clearState();
   };
@@ -178,7 +178,7 @@ class Auth extends React.Component {
   reqActivationEmail = async () => {
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({username: username, password: password}, 'activate');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'user/activate');
     if (resp.message === 'Bad credentials') this.clearState();
     return createSnackbar(resp.message);
   };
@@ -192,7 +192,7 @@ class Auth extends React.Component {
     const {username} = this.state;
     const {createSnackbar} = this.props;
     if (!username) return createSnackbar('Please enter your email');
-    this.props.sendRequest({username: username}, 'reset_password');
+    this.props.sendRequest({username: username}, 'user/reset_password');
     this.clearState();
     createSnackbar('Sending email...');
   };
