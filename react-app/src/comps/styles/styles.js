@@ -39,4 +39,11 @@ export const styles = theme => ({
     left: '50%',
     transform: 'translate(-50%, -50%)',
   },
+  root: {
+    paddingTop: theme.spacing.unit * 2,
+    paddingBottom: theme.spacing.unit *2,
+    width: 400,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  },
 });
