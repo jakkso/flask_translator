@@ -14,51 +14,8 @@ import withStyles from '@material-ui/core/styles/withStyles';
 
 import NewPassword from './newPassword';
 import ResetPassword from './resetPasswordRequest';
+import {styles} from '../styles/styles'
 import Unactivated from './unactivated';
-
-const styles = theme => ({
-  main: {
-    width: 'auto',
-    display: 'block', // Fix IE 11 issue.
-    marginLeft: theme.spacing.unit * 3,
-    marginRight: theme.spacing.unit * 3,
-    [theme.breakpoints.up(400 + theme.spacing.unit * 3 * 2)]: {
-      width: 400,
-      marginLeft: 'auto',
-      marginRight: 'auto',
-    },
-  },
-  paper: {
-    marginTop: theme.spacing.unit * 8,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme.spacing.unit * 3}px`,
-  },
-  avatar: {
-    margin: theme.spacing.unit,
-    backgroundColor: theme.palette.secondary.main,
-  },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing.unit,
-  },
-  submit: {
-    marginTop: theme.spacing.unit * 3,
-  },
-  modal: {
-    position: 'absolute',
-    width: theme.spacing.unit * 50,
-    backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing.unit * 4,
-    outline: 'none',
-    top:'50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-  },
-});
-
 
 
 
@@ -110,8 +67,7 @@ class Auth extends React.Component {
     const passwordResetToken = params.get('reset_password');
     if (activationToken) this.activationHandler(activationToken);
     if (passwordResetToken) this.setState({passwordResetToken});
-    // Remove token from URL
-    if (activationToken || passwordResetToken) {
+    if (activationToken || passwordResetToken) { // Remove token from URL
       window.history.pushState(null, "", window.location.href.split("?")[0]);
     }
    };
@@ -123,14 +79,15 @@ class Auth extends React.Component {
    */
   activationHandler = async (token) => {
     const {createSnackbar} = this.props;
-    const resp = await this.sendRequest({token: token}, 'activate', 'PUT');
+    const resp = await this.props.sendRequest({token: token}, 'activate', {}, 'PUT');
     if (resp.message.includes('has been verified')) this.clearState();
     createSnackbar(resp.message)
   };
 
   /**
    * Validates email address, creating notification if not valid.
-   * The regex used is as simple as possible, addresses must be reachable
+   * The regex used is as simple as possible, addresses must be reachable to be verified
+   * If users screw up, they won't be able to activate / use the account
    * @return {boolean}
    */
   validateUsername() {
@@ -163,27 +120,6 @@ class Auth extends React.Component {
   }
 
   /**
-   * Sends authentication requests to server, return object of the server's response
-   * @param body {Object} containing request parameters
-   * @param endpoint {string}
-   * @param method {string}
-   * @return {Promise<{Object}>}
-   */
-  sendRequest = async (body, endpoint, method = 'POST') => {
-    const url = this.props.baseUrl + endpoint;
-    const jsonBody = JSON.stringify(body);
-    const headers = {'Content-Type': 'application/json'};
-    const options = {
-      method: method,
-      mode: 'cors',
-      headers: headers,
-      body: jsonBody
-    };
-    const resp = await fetch(url, options);
-    return await resp.json();
-  };
-
-  /**
    *
    * @param event
    * @return {Promise<*>}
@@ -193,7 +129,7 @@ class Auth extends React.Component {
     const {username, password} = this.state;
     const {createSnackbar, setTokens} = this.props;
     if (!username || !password) return createSnackbar('Username and password required');
-    const resp = await this.sendRequest({username: username, password: password}, 'login');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'login');
     switch (resp.message) {
       case 'Bad credentials':
         return createSnackbar('Bad username or password');
@@ -216,7 +152,7 @@ class Auth extends React.Component {
     if (!this.validatePassword() || !this.validateUsername()) return;
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
-    const resp = await this.sendRequest({username: username, password: password}, 'registration');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'registration');
     if (resp.message === `User ${username} was created`) this.setState({unactivated: true});
     return createSnackbar(resp.message);
   };
@@ -230,7 +166,7 @@ class Auth extends React.Component {
     const {passwordResetToken, password} = this.state;
     const {createSnackbar} = this.props;
     if (!this.validatePassword()) return;
-    const resp = await this.sendRequest({token: passwordResetToken, password: password}, 'reset_password', 'PUT');
+    const resp = await this.props.sendRequest({token: passwordResetToken, password: password}, 'reset_password', {}, 'PUT');
     createSnackbar(resp.message);
     this.clearState();
   };
@@ -242,7 +178,7 @@ class Auth extends React.Component {
   reqActivationEmail = async () => {
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
-    const resp = await this.sendRequest({username: username, password: password}, 'activate');
+    const resp = await this.props.sendRequest({username: username, password: password}, 'activate');
     if (resp.message === 'Bad credentials') this.clearState();
     return createSnackbar(resp.message);
   };
@@ -256,9 +192,9 @@ class Auth extends React.Component {
     const {username} = this.state;
     const {createSnackbar} = this.props;
     if (!username) return createSnackbar('Please enter your email');
-    const resp = await this.sendRequest({username: username}, 'reset_password');
-    createSnackbar(resp.message);
+    this.props.sendRequest({username: username}, 'reset_password');
     this.clearState();
+    createSnackbar('Sending email...');
   };
 
   render() {

@@ -22,6 +22,20 @@ export default class MainView extends React.Component {
     this.setState({infoText: text})
   };
 
+  sendRequest = async (body, endpoint, additionalHeaders = {}, method = 'POST') => {
+    const jsonBody = JSON.stringify(body);
+    const url = this.baseUrl + endpoint;
+    const headers = {...{'Content-Type': 'application/json'}, ...additionalHeaders};
+    const options = {
+      method: method,
+      mode: 'cors',
+      headers: headers,
+      body: jsonBody
+    };
+    const resp = await fetch(url, options);
+    return await resp.json();
+  };
+
   /**
    * Access tokens expire after 15 min, this method retrieves a new one using refresh
    * token.  If the refresh attempt fails, log out user
@@ -29,17 +43,9 @@ export default class MainView extends React.Component {
    */
   refreshAccessToken = async () => {
     const {refreshToken} = this.state;
-    const url = this.baseUrl + 'token/refresh';
-    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${refreshToken}`};
-    const options = {
-      method: 'POST',
-      mode: 'cors',
-      headers: headers,
-    };
-    const resp = await fetch(url, options);
-    const data = await resp.json();
-    if (data.access_token) {
-      this.setState({accessToken: data.access_token});
+    const resp = await this.sendRequest({}, 'token/refresh', {'Authorization': `Bearer ${refreshToken}`});
+    if (resp.access_token) {
+      this.setState({accessToken: resp.access_token});
       return true;
     }
     else {
@@ -65,27 +71,20 @@ export default class MainView extends React.Component {
    * @return {Promise<*>}
    */
   sendTranslateRequest = async (sourceLang, targetLang, text) => {
-    const translateURL = this.baseUrl + 'translate';
-    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${this.state.accessToken}`};
+    const headers = {'Authorization': `Bearer ${this.state.accessToken}`};
     const body = {text: text, to: targetLang, from: sourceLang};
-    const resp = await fetch(translateURL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: headers,
-      body: JSON.stringify(body)
-    });
-    const data = await resp.json();
-    // data.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
-    if (data.msg) {
+    const resp = await this.sendRequest(body, 'translate', headers);
+    // resp.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
+    if (resp.msg) {
       const refreshSuccessful = await this.refreshAccessToken();
       if (refreshSuccessful) {
         return this.sendTranslateRequest(sourceLang, targetLang, text);
       }
-      // data.error means there something went wrong with the request to Azure's translate API
-    } else if (data.error) {
+      // resp.error means there something went wrong with the request to Azure's translate API
+    } else if (resp.error) {
       this.createSnackbar('Something went wrong, please try again later.')
-    } else if (data[0]){
-      return data[0];
+    } else if (resp[0]){
+      return resp[0];
     }
   };
 
@@ -95,18 +94,12 @@ export default class MainView extends React.Component {
    */
   logout = async (event) => {
     if (event) event.preventDefault();
-    const logoutURL = this.baseUrl + 'logout/';
     const {accessToken, refreshToken} = this.state;
-    this.setState({accessToken: null, refreshToken: null, checkbox: false});
-    const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}`};
-    const options = {
-      method: 'POST',
-      mode: 'cors',
-      headers: headers,
-    };
-    await fetch(logoutURL + 'access', options);
-    options.headers['Authorization'] = `Bearer ${refreshToken}`;
-    await fetch(logoutURL + 'refresh', options);
+    this.setState({accessToken: null, refreshToken: null});
+    const headers = {'Authorization': `Bearer ${accessToken}`};
+    this.sendRequest({}, 'logout/access', headers);
+    headers['Authorization'] = `Bearer ${refreshToken}`;
+    this.sendRequest({}, 'logout/refresh', headers);
   };
 
   render() {
@@ -116,7 +109,12 @@ export default class MainView extends React.Component {
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
     const error = infoText ? <Bubble message={infoText} clearText={()=> this.setState({infoText: ''})} /> : null;
-    const signIn = loggedIn ? null : <Auth baseUrl={this.baseUrl} createSnackbar={this.createSnackbar} setTokens={this.setTokens}/>;
+    const signIn = loggedIn ? null :
+      <Auth
+        sendRequest={this.sendRequest}
+        createSnackbar={this.createSnackbar}
+        setTokens={this.setTokens}
+      />;
       return (
         <div>
           <TitleBar/>
