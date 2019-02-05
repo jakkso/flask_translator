@@ -5,9 +5,10 @@ Contain tests for API endpoints
 """
 import json
 
+from flask_jwt_extended import create_access_token, create_refresh_token
+
 from flask_app.tests import app
 from flask_app.resources.endpoints import generate_activation_url
-from flask_app.token import token
 from settings import Config
 
 
@@ -72,9 +73,13 @@ def test_activate_put(app) -> None:
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     # Good request
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
+        token_2 = create_access_token('bob@bob.com')
+        bad_email = create_access_token("not_bob@bob.com")
     resp = client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     assert 201 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
@@ -82,19 +87,26 @@ def test_activate_put(app) -> None:
     # Already activated email
     resp = client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token_2}'},
     )
     assert 200 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User already verified" == body["message"]
     # Bad token
-    resp = client().put("/user/activate", data={"token": ""})
-    assert 406 == resp.status_code
+    resp = client().put("/user/activate", headers={"Authorization": ""})
+    assert 401 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
-    assert "Confirmation link has expired or is invalid" == body["message"]
-    bad_email = token.generate_confirmation_token("not_bob@bob.com")
+    assert "Missing Authorization Header" == body["msg"]
+    resp = client().put("/user/activate", headers={"Authorization": f"Bearer {token_2}"})
+    assert 401 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert 'Token has been revoked' == body['msg']
+    resp = client().put("/user/activate", headers={"Authorization": f"{token_2}"})
+    assert 422 == resp.status_code
+    body = json.loads(resp.data.decode("utf-8"))
+    assert "Bad Authorization header. Expected value 'Bearer <JWT>'" == body['msg']
     # Unregistered email
-    resp = client().put("/user/activate", data={"token": bad_email})
+    resp = client().put("/user/activate", headers={"Authorization": f'Bearer {bad_email}'})
     assert 400 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User not_bob@bob.com does not exist" == body["message"]
@@ -124,9 +136,11 @@ def test_activate_post(app) -> None:
     body = json.loads(resp.data.decode("utf-8"))
     assert 201 == resp.status_code
     assert "Verification email sent" == body["message"]
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
     client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     resp = client().post("/user/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
@@ -152,9 +166,11 @@ def test_login(app) -> None:
     assert unverified.status_code == 401
     body = json.loads(unverified.data.decode("utf-8"))
     assert body["message"] == "Unverified email address"
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
     client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     data = {"username": "bob@bob.com", "password": ""}
     bad_pw = client().post("/user/login", data=data)
@@ -178,9 +194,11 @@ def test_logout_access(app) -> None:
         "/user/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
     client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     bob = client().post(
         "/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -207,9 +225,11 @@ def test_logout_refresh(app) -> None:
         "/user/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
     client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     bob = client().post(
         "/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -234,9 +254,11 @@ def test_refresh_access(app) -> None:
         "/user/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
     client().put(
         "/user/activate",
-        data={"token": token.generate_confirmation_token("bob@bob.com")},
+        headers={"Authorization": f'Bearer {token}'},
     )
     bob = client().post(
         "/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -274,55 +296,60 @@ def test_reset_password(app) -> None:
     assert resp.status_code == 200
     assert body["message"] == "Attempted password reset"
     password = "hunter2hunter2hunter2"
-    token_ = token.generate_confirmation_token("bob@bob.com")
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
+        missing_user = create_access_token('not@bob.com')
+        token_2 = create_access_token('bob@bob.com')
     resp = client().put(
-        "/user/reset_password", data={"token": token_, "password": password}
+        "/user/reset_password", data={"password": password}, headers={'Authorization': f'Bearer {token}'}
     )
     assert resp.status_code == 201
-    bad_token = token.generate_confirmation_token("not@bob.com")
     body = json.loads(resp.data.decode("utf-8"))
     assert body["message"] == "Password updated"
     resp = client().put(
-        "/user/reset_password", data={"token": bad_token, "password": password}
+        "/user/reset_password", data={"password": password}, headers={'Authorization': f'Bearer {missing_user}'}
     )
     assert resp.status_code == 400
     body = json.loads(resp.data.decode("utf-8"))
     assert body["message"] == "Invalid username"
     resp = client().put(
-        "/user/reset_password", data={"token": token_, "password": "hunter2"}
+        "/user/reset_password", data={"password": "hunter2"}, headers={'Authorization': f'Bearer {token_2}'}
     )
     assert resp.status_code == 400
     body = json.loads(resp.data.decode("utf-8"))
     assert body["message"] == "Invalid password"
-    bad_token = "bob@bob.com"
     resp = client().put(
-        "/user/reset_password", data={"token": bad_token, "password": "hunter2"}
+        "/user/reset_password", data={"password": "hunter2hunter2hunter2"},
+        headers={'Authorization': f'Bearer {token}'}
     )
-    assert resp.status_code == 406
+    assert resp.status_code == 401
     body = json.loads(resp.data.decode("utf-8"))
-    assert body["message"] == "Confirmation link has expired or is invalid"
+    assert body["msg"] == "Token has been revoked"
 
 
 def test_delete_account(app) -> None:
+    with app.app_context():
+        token = create_access_token('bob@bob.com')
+        missing_user = create_access_token('not@bob.com')
     client = app.test_client
     client().post(
         "/user/registration",
-        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+        data={"username": 'bob@bob.com', "password": "hunter2hunter222"},
     )
     resp = client().delete(
-        "/user/delete", data={"username": "not@bob.com", "password": "hunter2"}
-    )
-    assert resp.status_code == 400
-    body = json.loads(resp.data.decode("utf-8"))
-    assert body["message"] == "Bad credentials"
-    resp = client().delete(
-        "/user/delete", data={"username": "bob@bob.com", "password": "hunter2"}
+        "/user/delete", data={"password": "hunter2"}, headers={'Authorization': f'Bearer {token}'}
     )
     assert resp.status_code == 400
     body = json.loads(resp.data.decode("utf-8"))
     assert body["message"] == "Bad credentials"
     resp = client().delete(
-        "/user/delete", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
+        "/user/delete", data={"password": "hunter2"}, headers={'Authorization': f'Bearer {missing_user}'}
+    )
+    assert resp.status_code == 400
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Bad credentials"
+    resp = client().delete(
+        "/user/delete", data={"password": "hunter2hunter222"}, headers={'Authorization': f'Bearer {token}'}
     )
     assert 202 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
