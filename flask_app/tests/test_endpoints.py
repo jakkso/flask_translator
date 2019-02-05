@@ -294,6 +294,16 @@ def test_reset_password(app) -> None:
     assert body["message"] == "Confirmation link has expired or is invalid"
 
 
+def test_delete_account(app) -> None:
+    client = app.test_client
+    client().post(
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+
+
+
+
 def test_generate_url() -> None:
     """
     Tests generation of urls
