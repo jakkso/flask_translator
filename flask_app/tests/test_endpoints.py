@@ -6,7 +6,9 @@ Contain tests for API endpoints
 import json
 
 from flask_app.tests import app
+from flask_app.resources.endpoints import generate_activation_url
 from flask_app.token import token
+from settings import Config
 
 
 def test_registration(app) -> None:
@@ -60,7 +62,7 @@ def test_registration(app) -> None:
     assert "User bob@bob.com already exists" == body["message"]
 
 
-def test_activate_get(app) -> None:
+def test_activate_put(app) -> None:
     """
     Tests activation functionality get request
     """
@@ -70,29 +72,27 @@ def test_activate_get(app) -> None:
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     # Good request
-    resp = client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    resp = client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     assert 201 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User bob@bob.com has been verified" == body["message"]
     # Already activated email
-    resp = client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    resp = client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     assert 200 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User already verified" == body["message"]
     # Bad token
-    resp = client().get("/activate", data={"token": ""})
+    resp = client().put("/activate", data={"token": ""})
     assert 406 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "Confirmation link has expired or is invalid" == body["message"]
     bad_email = token.generate_confirmation_token("not_bob@bob.com")
     # Unregistered email
-    resp = client().get("/activate", data={"token": bad_email})
+    resp = client().put("/activate", data={"token": bad_email})
     assert 400 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User not_bob@bob.com does not exist" == body["message"]
@@ -111,7 +111,7 @@ def test_activate_post(app) -> None:
     resp = client().post("/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
     assert 400 == resp.status_code
-    assert "User  does not exist" == body["message"]
+    assert "Bad credentials" == body["message"]
     data["username"] = "bob@bob.com"
     resp = client().post("/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
@@ -122,9 +122,8 @@ def test_activate_post(app) -> None:
     body = json.loads(resp.data.decode("utf-8"))
     assert 201 == resp.status_code
     assert "Verification email sent" == body["message"]
-    client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     resp = client().post("/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
@@ -150,9 +149,8 @@ def test_login(app) -> None:
     assert unverified.status_code == 401
     body = json.loads(unverified.data.decode("utf-8"))
     assert body["message"] == "Unverified email address"
-    client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     data = {"username": "bob@bob.com", "password": ""}
     bad_pw = client().post("/login", data=data)
@@ -176,9 +174,8 @@ def test_logout_access(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -205,9 +202,8 @@ def test_logout_refresh(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -232,9 +228,8 @@ def test_refresh_access(app) -> None:
         "/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
-    client().get(
-        "/activate",
-        query_string={"token": token.generate_confirmation_token("bob@bob.com")},
+    client().put(
+        "/activate", data={"token": token.generate_confirmation_token("bob@bob.com")}
     )
     bob = client().post(
         "/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
@@ -252,3 +247,58 @@ def test_refresh_access(app) -> None:
     assert 200 == good_token.status_code
     body = json.loads(good_token.data.decode("utf-8"))
     assert access_token != body["access_token"]
+
+
+def test_reset_password(app) -> None:
+    client = app.test_client
+    client().post(
+        "/registration",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+    )
+    resp = client().post("/reset_password", query_string={})
+    body = json.loads(resp.data.decode("utf-8"))
+    assert 400 == resp.status_code
+    assert body["message"] == {"username": "This field cannot be blank"}
+    resp = client().post("/reset_password", data={"username": "not@bob.com"})
+    assert resp.status_code == 200
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Attempted password reset"
+    resp = client().post("/reset_password", data={"username": "bob@bob.com"})
+    assert resp.status_code == 200
+    assert body["message"] == "Attempted password reset"
+    password = "hunter2hunter2hunter2"
+    token_ = token.generate_confirmation_token("bob@bob.com")
+    resp = client().put("/reset_password", data={"token": token_, "password": password})
+    assert resp.status_code == 201
+    bad_token = token.generate_confirmation_token("not@bob.com")
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Password updated"
+    resp = client().put(
+        "/reset_password", data={"token": bad_token, "password": password}
+    )
+    assert resp.status_code == 400
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Invalid username"
+    resp = client().put(
+        "/reset_password", data={"token": token_, "password": "hunter2"}
+    )
+    assert resp.status_code == 400
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Invalid password"
+    bad_token = "bob@bob.com"
+    resp = client().put(
+        "/reset_password", data={"token": bad_token, "password": "hunter2"}
+    )
+    assert resp.status_code == 406
+    body = json.loads(resp.data.decode("utf-8"))
+    assert body["message"] == "Confirmation link has expired or is invalid"
+
+
+def test_generate_url() -> None:
+    """
+    Tests generation of urls
+    :return:
+    """
+    token = "123456"
+    url = generate_activation_url("token", token)
+    assert Config.FRONT_END_URL + "?" + f"token={token}" == url

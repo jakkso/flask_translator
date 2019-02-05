@@ -30,8 +30,8 @@ const styles = theme => ({
 });
 
 
-function Unverified(props) {
-  const {username, sendReq, logout, classes} = props;
+function Unactivated(props) {
+  const {sendReq, logout, classes} = props;
   return (
     <main className={classes.main}>
       <Paper className={classes.paper}>
@@ -39,20 +39,20 @@ function Unverified(props) {
           Unactivated Account
         </Typography>
         <Typography component="p">
-          Hey there, we noticed you haven't activated your account yet!.  Click on the link on the email you were sent.
-        </Typography>
-        <Typography component="p">
-          Did the email get lost or expire?  Click below!
+          Hey there, we noticed you haven't activated your account yet. To activate it, click on the link on the email we sent you.
         </Typography>
         <Button
           className={classes.buttons}
           fullWidth
           variant="contained"
           color="primary"
-          onClick={()=>{sendReq(username)}}
+          onClick={()=>{sendReq()}}
         >
           Send another email
         </Button>
+        <Typography component="p">
+          Did the email get lost or expire?
+        </Typography>
         <Button
           className={classes.buttons}
           fullWidth
@@ -67,4 +67,4 @@ function Unverified(props) {
   )
 }
 
-export default withStyles(styles)(Unverified)
+export default withStyles(styles)(Unactivated)

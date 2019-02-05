@@ -51,4 +51,5 @@ def create_app(test_config=None) -> Flask:
     api.add_resource(endpoints.TokenRefresh, "/token/refresh")
     api.add_resource(endpoints.SecretResource, "/translate")
     api.add_resource(endpoints.UserActivation, "/activate")
+    api.add_resource(endpoints.UserResetPassword, "/reset_password")
     return app

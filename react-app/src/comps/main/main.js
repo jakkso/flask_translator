@@ -11,15 +11,14 @@ export default class MainView extends React.Component {
     this.baseUrl = 'http://localhost:5000/';
 
     // Bind instance methods
-    this.errMsg = this.errMsg.bind(this);
+    this.createSnackbar = this.createSnackbar.bind(this);
     this.logout = this.logout.bind(this);
     this.refreshAccessToken = this.refreshAccessToken.bind(this);
     this.sendTranslateRequest = this.sendTranslateRequest.bind(this);
-    this.submitAuthRequest = this.submitAuthRequest.bind(this);
 
     // State construction
     this.state = {
-      errText: '',
+      infoText: '',
       accessToken: null,
       refreshToken: null,
       langs: null,
@@ -28,54 +27,10 @@ export default class MainView extends React.Component {
 
   /**
    *
-   * @param errText {string}
+   * @param text {string}
    */
-  errMsg(errText) {
-    this.setState({errText})
-  }
-
-  /**
-   *
-   * @param creds {object} containing username, password and registration attributes
-   * @return {Promise<void>}
-   */
-  async submitAuthRequest(creds) {
-    const url = creds.registration ? this.baseUrl + 'registration': this.baseUrl + 'login';
-    const body = JSON.stringify({username: creds.username, password: creds.password});
-    const headers = {"Content-Type": 'application/json'};
-    const options = {
-      method: 'POST',
-      mode: 'cors',
-      headers: headers,
-      body: body
-    };
-
-    const resp = await fetch(url, options);
-    const data = await resp.json();
-    const res = {success: null, msg: null};
-    if (data.message === `User ${creds.username} already exists`) {
-      return this.errMsg(data.message);
-    } else if (data.message === 'Bad credentials' || data.message === `User ${creds.username} does not exist`) {
-      this.errMsg('Bad username or password');
-      res.success = false;
-    } else if (data.message === 'Unverified email address') {
-      res.success = false;
-      res.msg = data.message;
-    } else if (data.message === `Logged in as ${creds.username}` || data.message === `User ${creds.username} was created`) {
-      if (data.access_token && data.refresh_token) {
-        this.setState({
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token,
-          errText: ''
-        });
-        res.success = true;
-      }
-    } else {
-      this.errMsg('Authentication failure, please try again later');
-      res.success = false;
-      res.msg = 'Authentication failure, please try again later';
-    }
-    return res;
+  createSnackbar(text) {
+    this.setState({infoText: text})
   }
 
   /**
@@ -100,10 +55,14 @@ export default class MainView extends React.Component {
     }
     else {
       await this.logout();
-      this.setState({errText: 'Please log in again.'});
+      this.createSnackbar('Please log in again.');
       return false;
     }
   }
+
+  setTokens = (accessToken, refreshToken) => {
+    this.setState({accessToken, refreshToken})
+  };
 
   /**
    * @param sourceLang abbreviation of a language's name.  e.g., `en` for English
@@ -130,7 +89,7 @@ export default class MainView extends React.Component {
       }
       // data.error means there something went wrong with the request to Azure's translate API
     } else if (data.error) {
-      this.setState({errText: 'Something went wrong, please try again later.'});
+      this.createSnackbar('Something went wrong, please try again later.')
     } else if (data[0]){
       return data[0];
     }
@@ -158,13 +117,13 @@ export default class MainView extends React.Component {
   }
 
   render() {
-    const {accessToken, refreshToken, errText} = this.state;
+    const {accessToken, refreshToken, infoText} = this.state;
     const loggedIn = accessToken && refreshToken;
     const translator = loggedIn ?
       <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
       : null;
-    const error = errText ? <Bubble message={errText} clearText={()=> this.setState({errText: ''})} /> : null;
-    const signIn = loggedIn ? null : <Auth submitAuth={this.submitAuthRequest} errMsg={this.errMsg}/>;
+    const error = infoText ? <Bubble message={infoText} clearText={()=> this.setState({infoText: ''})} /> : null;
+    const signIn = loggedIn ? null : <Auth baseUrl={this.baseUrl} createSnackbar={this.createSnackbar} setTokens={this.setTokens}/>;
       return (
         <div>
           <TitleBar/>

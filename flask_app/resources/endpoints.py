@@ -2,7 +2,7 @@
 Contains API endpoint definitions
 """
 
-from flask import render_template, url_for
+from flask import render_template
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -19,6 +19,7 @@ from flask_app.email.email import send_email
 from flask_app.models import RevokedTokenModel, UserModel
 from flask_app.resources.translate import translate
 from flask_app.token import token
+from settings import Config
 
 parser = reqparse.RequestParser()
 parser.add_argument("username", help="This field cannot be blank", required=True)
@@ -31,6 +32,13 @@ translator.add_argument("to", help="This field cannot be blank", required=True)
 
 activate = reqparse.RequestParser()
 activate.add_argument("token", help="This field cannot be blank", required=True)
+
+pw_reset = reqparse.RequestParser()
+pw_reset.add_argument("token", help="This field cannot be blank", required=True)
+pw_reset.add_argument("password", help="This field cannot be blank", required=True)
+
+pw_reset_req = reqparse.RequestParser()
+pw_reset_req.add_argument("username", help="This field cannot be blank", required=True)
 
 
 class UserRegistration(Resource):
@@ -49,7 +57,7 @@ class UserRegistration(Resource):
             return {"message": "Invalid password"}, 400
         try:
             token_ = token.generate_confirmation_token(new_user.username)
-            confirm_url = url_for("useractivation", token=token_, _external=True)
+            confirm_url = generate_activation_url("activate", token_)
             subject = "Please confirm your email address"
             html = render_template("activate.html", confirm_url=confirm_url)
             send_email(new_user.username, subject, html)
@@ -60,7 +68,24 @@ class UserRegistration(Resource):
 
 
 class UserActivation(Resource):
-    def get(self):
+    def post(self):
+        data = parser.parse_args()
+        current_user = UserModel.find_by_username(data["username"])
+        if not current_user:
+            return {"message": "Bad credentials"}, 400
+        if UserModel.verify_hash(data["password"], current_user.password):
+            if current_user.email_verified:
+                return {"message": f"User {data['username']} already verified"}, 400
+            else:
+                token_ = token.generate_confirmation_token(current_user.username)
+                confirm_url = generate_activation_url("activate", token_)
+                subject = "Please confirm your email address"
+                html = render_template("activate.html", confirm_url=confirm_url)
+                send_email(current_user.username, subject, html)
+                return {"message": "Verification email sent"}, 201
+        return {"message": "Bad credentials"}, 400
+
+    def put(self):
         data = activate.parse_args()
         token_ = data["token"]
         email = token.confirm_token(token_)
@@ -75,33 +100,16 @@ class UserActivation(Resource):
         user.save_to_db()
         return {"message": f"User {email} has been verified"}, 201
 
-    def post(self):
-        data = parser.parse_args()
-        current_user = UserModel.find_by_username(data["username"])
-        if not current_user:
-            return {"message": f"User {data['username']} does not exist"}, 400
-        if UserModel.verify_hash(data["password"], current_user.password):
-            if current_user.email_verified:
-                return {"message": f"User {data['username']} already verified"}, 400
-            else:
-                token_ = token.generate_confirmation_token(current_user.username)
-                confirm_url = url_for("useractivation", token=token_, _external=True)
-                subject = "Please confirm your email address"
-                html = render_template("activate.html", confirm_url=confirm_url)
-                send_email(current_user.username, subject, html)
-                return {"message": "Verification email sent"}, 201
-        return {"message": "Bad credentials"}, 400
-
 
 class UserLogin(Resource):
     def post(self):
         data = parser.parse_args()
         current_user = UserModel.find_by_username(data["username"])
         if not current_user:
-            return {"message": f"User {data['username']} does not exist"}, 400
-        if not current_user.email_verified:
-            return {"message": f"Unverified email address"}, 401
+            return {"message": "Bad credentials"}, 400
         if UserModel.verify_hash(data["password"], current_user.password):
+            if not current_user.email_verified:
+                return {"message": f"Unverified email address"}, 401
             access_token = create_access_token(identity=data["username"])
             refresh_token = create_refresh_token(identity=data["username"])
             return (
@@ -140,6 +148,37 @@ class UserLogoutRefresh(Resource):
             return {"message": "Something went wrong"}, 500
 
 
+class UserResetPassword(Resource):
+    def post(self):
+        data = pw_reset_req.parse_args()
+        return_value = {"message": "Attempted password reset"}, 200
+        user = UserModel.find_by_username(data["username"])
+        if not user:
+            return return_value
+        token_ = token.generate_confirmation_token(user.username)
+        url = generate_activation_url("reset_password", token_)
+        subject = "Password reset request"
+        html = render_template("reset_password.html", reset_url=url)
+        send_email(user.username, subject, html)
+        return return_value
+
+    def put(self):
+        data = pw_reset.parse_args()
+        token_ = data["token"]
+        password = data["password"]
+        email = token.confirm_token(token_)
+        if not email:
+            return {"message": "Confirmation link has expired or is invalid"}, 406
+        user = UserModel.find_by_username(email)
+        if not user:
+            return {"message": "Invalid username"}, 400
+        if not user.validate_password(password):
+            return {"message": "Invalid password"}, 400
+        user.password = UserModel.generate_hash(password)
+        user.save_to_db()
+        return {"message": "Password updated"}, 201
+
+
 class TokenRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
@@ -157,3 +196,13 @@ class SecretResource(Resource):
             return response, 200
         elif response["error"]:
             return {"error": "Internal Service Error"}, 500
+
+
+def generate_activation_url(token_name: str, token_value: str) -> str:
+    """
+    Generates url with token_name=token_value embedded in it.
+    :param token_name:
+    :param token_value:
+    :return:
+    """
+    return Config.FRONT_END_URL + "?" + f"{token_name}={token_value}"

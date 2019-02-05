@@ -30,3 +30,5 @@ class Config:
     MAIL_USE_SSL = False
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 587
+
+    FRONT_END_URL = env.get("front_end_url")
