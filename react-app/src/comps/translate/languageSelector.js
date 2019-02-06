@@ -1,9 +1,11 @@
 import React from 'react';
+
 import { withStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+
 
 const styles = theme => ({
   root: {
@@ -19,7 +21,8 @@ const styles = theme => ({
   },
 });
 
-function MaterialLangSelect(props) {
+
+function LanguageSelector(props) {
   const { classes, langs, excluded, onChange, id, selected, label } = props;
   const availableLanguages = langs.filter(lang => {
     return lang[0] !== excluded;
@@ -49,4 +52,4 @@ function MaterialLangSelect(props) {
   )
 }
 
-export default withStyles(styles)(MaterialLangSelect);
+export default withStyles(styles)(LanguageSelector);
