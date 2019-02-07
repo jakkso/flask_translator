@@ -2,7 +2,7 @@ import React from 'react';
 
 import Auth from './comps/auth/auth';
 import Bubble from './comps/notification/notification';
-import AppBar from './comps/main/drawer';
+import MainMenu from './comps/main/menu';
 import Translate from './comps/translate/translate';
 
 export default class MainView extends React.Component {
@@ -33,6 +33,13 @@ export default class MainView extends React.Component {
     };
     const resp = await fetch(url, options);
     return await resp.json();
+  };
+
+
+  getFreshAuthHeader = async () => {
+    await this.refreshAccessToken();
+    const {accessToken} = this.state;
+    return {'Authorization': `Bearer ${accessToken}`}
   };
 
   /**
@@ -114,7 +121,13 @@ export default class MainView extends React.Component {
     const error = infoText ? <Bubble message={infoText} clearText={()=> this.setState({infoText: ''})} /> : null;
     return (
       <div>
-        <AppBar loggedIn={loggedIn} logout={this.logout}/>
+        <MainMenu
+          loggedIn={loggedIn}
+          logout={this.logout}
+          sendRequest={this.sendRequest}
+          getFreshAuthHeader={this.getFreshAuthHeader}
+          createSnackbar={this.createSnackbar}
+        />
         {translator}
         {error}
       </div>

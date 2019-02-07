@@ -10,7 +10,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 
-import TitleBar from "./appBar";
+import DeleteAccount from '../auth/deleteAccount';
+import TitleBar from "./titleBar";
 
 
 const styles = {
@@ -20,38 +21,64 @@ const styles = {
 };
 
 
-class AppBar extends React.Component {
+class MainMenu extends React.Component {
   state = {
-    show: false,
+    showDrawer: false,
+    showDelete: false,
   };
+
 
   toggleDrawer = () => {
     this.setState((prevState => {
-      return {show: !prevState.show}
+      return {showDrawer: !prevState.showDrawer}
     }));
   };
 
+  toggleDeleteAccount = () => {
+    this.setState((prevState => {
+      return {showDelete: !prevState.showDelete, showDrawer: false}
+    }))
+  };
+
+  /**
+   * Give the drawer animation time to work, then call logout
+   */
   logout = () => {
-    this.toggleDrawer();
+    this.setState({showDrawer: false});
     setTimeout(() => {this.props.logout()}, 300);
+  };
+
+  deleteAccount = async (password) => {
+    const {sendRequest, getFreshAuthHeader, createSnackbar} = this.props;
+    const headers = await getFreshAuthHeader();
+    const resp = await sendRequest({password: password}, 'user/delete', headers, 'DELETE');
+    if (resp.message) {
+      createSnackbar(resp.message);
+      if (resp.message.includes('deleted')) {
+        this.toggleDeleteAccount();
+        this.logout();
+      }
+    }
   };
 
   icons = {
     'About': {icon: HelpOutline, action: ()=>{console.log('About!')}},
     'Logout': {icon: CloseIcon, action: this.logout},
-    'Delete Account': {icon: DeleteForever, action: ()=>{console.log('Delete Account')}},
+    'Delete Account': {icon: DeleteForever, action: this.toggleDeleteAccount},
   };
 
   render() {
+    const {showDelete} = this.state;
     const { classes, loggedIn } = this.props;
     let listItems;
     if (loggedIn) listItems = ['About', 'Logout', 'Delete Account'];
     else listItems = ['About'];
-    const sideList = (
+    const menuItems = (
       <div className={classes.list}>
         <List>
           {listItems.map((item) => {
-            const Icon = this.icons[item].icon; // React renders based on whether or not the item is Capitalized
+            // React renders based on whether or not the item is Capitalized, so a simple lookup won't work
+            const Icon = this.icons[item].icon;
             return (
               <ListItem
                 button
@@ -66,15 +93,22 @@ class AppBar extends React.Component {
         </List>
       </div>
     );
+    const deletion = showDelete ?
+      <DeleteAccount
+        onClick={this.deleteAccount}
+        onCancel={this.toggleDeleteAccount}
+      />
+      : null;
     return (
       <div>
         <TitleBar toggleDrawer={this.toggleDrawer}/>
-        <Drawer open={this.state.show} onClose={this.toggleDrawer}>
-          {sideList}
+        <Drawer open={this.state.showDrawer} onClose={this.toggleDrawer}>
+          {menuItems}
         </Drawer>
+        {deletion}
       </div>
     );
   }
 }
 
-export default withStyles(styles)(AppBar);
+export default withStyles(styles)(MainMenu);
