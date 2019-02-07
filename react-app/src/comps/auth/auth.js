@@ -72,7 +72,8 @@ export default class Auth extends React.Component {
   activationHandler = async (token) => {
     const {createSnackbar} = this.props;
     const resp = await this.props.sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
-    if (resp.msg) createSnackbar('Link invalid or expired');
+    if (resp.error) createSnackbar(resp.error);
+    else if (resp.msg) createSnackbar('Link invalid or expired');
     else if (resp.message) createSnackbar(resp.message);
     this.clearState();
   };
@@ -123,15 +124,19 @@ export default class Auth extends React.Component {
     const {createSnackbar, setTokens} = this.props;
     if (!username || !password) return createSnackbar('Username and password required');
     const resp = await this.props.sendRequest({username: username, password: password}, 'user/login');
-    switch (resp.message) {
-      case 'Bad credentials':
-        return createSnackbar('Bad username or password');
-      case 'Unverified email address':
-        return this.setState({unactivated: true});
-      case `Logged in as ${username}`:
-        return setTokens(resp.access_token, resp.refresh_token);
-      default:
-        return;
+    if (resp.error){
+      createSnackbar(resp.error);
+    } else {
+      switch (resp.message) {
+        case 'Bad credentials':
+          return createSnackbar('Bad username or password');
+        case 'Unverified email address':
+          return this.setState({unactivated: true});
+        case `Logged in as ${username}`:
+          return setTokens(resp.access_token, resp.refresh_token);
+        default:
+          return;
+      }
     }
   };
 
@@ -142,12 +147,17 @@ export default class Auth extends React.Component {
    */
   registrationHandler = async (event) => {
     if (event) event.preventDefault();
-    if (!this.validatePassword() || !this.validateUsername()) return;
+    if (!this.validateUsername() || !this.validatePassword()) return;
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
     const resp = await this.props.sendRequest({username: username, password: password}, 'user/registration');
-    if (resp.message === `User ${username} was created`) this.setState({unactivated: true});
-    return createSnackbar(resp.message);
+    if (resp.error) {
+      createSnackbar(resp.error);
+      this.clearState();
+    } else if (resp.message === `User ${username} was created`){
+      this.setState({unactivated: true});
+      createSnackbar(resp.message);
+    }
   };
 
   /**
@@ -160,7 +170,8 @@ export default class Auth extends React.Component {
     const {createSnackbar} = this.props;
     if (!this.validatePassword()) return;
     const resp = await this.props.sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
-    if (resp.msg) createSnackbar('Link invalid or expired');
+    if (resp.error) createSnackbar(resp.error);
+    else if (resp.msg) createSnackbar('Link invalid or expired');
     else if (resp.message) createSnackbar(resp.message);
     this.clearState();
   };
@@ -173,8 +184,11 @@ export default class Auth extends React.Component {
     const {username, password} = this.state;
     const {createSnackbar} = this.props;
     const resp = await this.props.sendRequest({username: username, password: password}, 'user/activate');
-    if (resp.message === 'Bad credentials') this.clearState();
-    return createSnackbar(resp.message);
+    if (resp.error) createSnackbar(resp.error);
+    else if (resp.message === 'Bad credentials') {
+      this.clearState();
+      return createSnackbar(resp.message);
+    }
   };
 
   /**
@@ -186,9 +200,10 @@ export default class Auth extends React.Component {
     const {username} = this.state;
     const {createSnackbar} = this.props;
     if (!username) return createSnackbar('Please enter your email');
-    this.props.sendRequest({username: username}, 'user/reset_password');
+    const resp = await this.props.sendRequest({username: username}, 'user/reset_password');
+    if (resp.error) createSnackbar(resp.error);
+    else createSnackbar('Sending email...');
     this.clearState();
-    createSnackbar('Sending email...');
   };
 
   render() {

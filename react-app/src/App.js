@@ -22,19 +22,36 @@ export default class MainView extends React.Component {
     this.setState({infoText: text})
   };
 
+  /**
+   * Error handler for sendRequest
+   * @param response
+   * @return {{ok}|Object}
+   */
+  handleErrors = (response) => {
+    if (!response.ok) {
+      throw Error(response);
+    } else {
+      return response;
+    }
+  };
+
   sendRequest = async (body, endpoint, additionalHeaders = {}, method = 'POST') => {
     const url = this.baseUrl + endpoint;
     const headers = {...{'Content-Type': 'application/json'}, ...additionalHeaders};
     const options = {
       method: method,
-      mode: 'cors',
+    mode: 'cors',
       headers: headers,
       body: JSON.stringify(body)
-    };
-    const resp = await fetch(url, options);
-    return await resp.json();
   };
+    try {
+      const resp = this.handleErrors(await fetch(url, options));
+      return await resp.json();
+    } catch (e) {
+      return {error: 'Something went wrong, try again later.'}
+    }
 
+  };
 
   getFreshAuthHeader = async () => {
     await this.refreshAccessToken();
@@ -50,11 +67,13 @@ export default class MainView extends React.Component {
   refreshAccessToken = async () => {
     const {refreshToken} = this.state;
     const resp = await this.sendRequest({}, 'token/refresh', {'Authorization': `Bearer ${refreshToken}`});
-    if (resp.access_token) {
+    if (resp.error) {
+      this.createSnackbar(resp.error);
+      return false;
+    } else if (resp.access_token) {
       this.setState({accessToken: resp.access_token});
       return true;
-    }
-    else {
+    } else {
       await this.logout();
       this.createSnackbar('Please log in again.');
       return false;
@@ -103,9 +122,11 @@ export default class MainView extends React.Component {
     const {accessToken, refreshToken} = this.state;
     this.setState({accessToken: null, refreshToken: null});
     const headers = {'Authorization': `Bearer ${accessToken}`};
-    this.sendRequest({}, 'logout/access', headers);
+    let resp = await this.sendRequest({}, 'logout/access', headers);
+    if (resp.error) this.createSnackbar(resp.error);
     headers['Authorization'] = `Bearer ${refreshToken}`;
-    this.sendRequest({}, 'logout/refresh', headers);
+    resp = await this.sendRequest({}, 'logout/refresh', headers);
+    if (resp.error) this.createSnackbar(resp.error);
   };
 
   render() {

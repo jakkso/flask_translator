@@ -59,7 +59,10 @@ class MainMenu extends React.Component {
     const {sendRequest, getFreshAuthHeader, createSnackbar} = this.props;
     const headers = await getFreshAuthHeader();
     const resp = await sendRequest({password: password}, 'user/delete', headers, 'DELETE');
-    if (resp.message) {
+    if (resp.error) {
+      createSnackbar(resp.error);
+      this.toggleDeleteAccount();
+    } else if (resp.message) {
       createSnackbar(resp.message);
       if (resp.message.includes('deleted')) {
         this.toggleDeleteAccount();

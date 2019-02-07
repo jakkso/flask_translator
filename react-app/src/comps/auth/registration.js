@@ -53,6 +53,7 @@ const Register = (props) => {
           >
             <InputLabel htmlFor="password">Password</InputLabel>
             <Input
+              required
               id="password"
               name="password"
               value={password}
@@ -64,9 +65,11 @@ const Register = (props) => {
             margin="normal"
             required
             fullWidth
+            onSubmit={onSubmit}
           >
             <InputLabel htmlFor="password2">Repeat Password</InputLabel>
             <Input
+              required
               id="password2"
               name="password2"
               value={password2}
