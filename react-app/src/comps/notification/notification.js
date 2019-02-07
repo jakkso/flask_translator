@@ -14,7 +14,7 @@ export default class Bubble extends React.Component {
 
   handleClose() {
     this.setState({open: false});
-    setTimeout(this.props.clearText(), 500);
+    setTimeout(() => {this.props.clearText()}, 500);
   }
 
   render() {
