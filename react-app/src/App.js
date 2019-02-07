@@ -28,7 +28,8 @@ export default class MainView extends React.Component {
    * @return {{ok}|Object}
    */
   handleErrors = (response) => {
-    if (!response.ok) {
+    if (!response.ok && (response.status !== 400 && response.status !== 500)) {
+      console.error(response);
       throw Error(response);
     } else {
       return response;
@@ -86,7 +87,7 @@ export default class MainView extends React.Component {
    * @param refreshToken
    */
   setTokens = (accessToken, refreshToken) => {
-    this.setState({accessToken, refreshToken})
+    this.setState({accessToken, refreshToken});
   };
 
   /**
