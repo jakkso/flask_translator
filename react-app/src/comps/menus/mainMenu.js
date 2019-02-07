@@ -10,6 +10,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 
+import AboutModal from './about';
 import DeleteAccount from '../auth/deleteAccount';
 import TitleBar from "./titleBar";
 
@@ -25,8 +26,8 @@ class MainMenu extends React.Component {
   state = {
     showDrawer: false,
     showDelete: false,
+    showAbout: false,
   };
-
 
   toggleDrawer = () => {
     this.setState((prevState => {
@@ -37,6 +38,12 @@ class MainMenu extends React.Component {
   toggleDeleteAccount = () => {
     this.setState((prevState => {
       return {showDelete: !prevState.showDelete, showDrawer: false}
+    }))
+  };
+
+  toggleAbout = () => {
+    this.setState((prevState => {
+      return {showAbout: !prevState.showAbout, showDrawer: false}
     }))
   };
 
@@ -62,13 +69,13 @@ class MainMenu extends React.Component {
   };
 
   icons = {
-    'About': {icon: HelpOutline, action: ()=>{console.log('About!')}},
+    'About': {icon: HelpOutline, action: this.toggleAbout},
     'Logout': {icon: CloseIcon, action: this.logout},
     'Delete Account': {icon: DeleteForever, action: this.toggleDeleteAccount},
   };
 
   render() {
-    const {showDelete} = this.state;
+    const {showDelete, showAbout} = this.state;
     const { classes, loggedIn } = this.props;
     let listItems;
     if (loggedIn) listItems = ['About', 'Logout', 'Delete Account'];
@@ -99,6 +106,11 @@ class MainMenu extends React.Component {
         onCancel={this.toggleDeleteAccount}
       />
       : null;
+    const about = showAbout ?
+      <AboutModal
+        onClick={this.toggleAbout}
+      />
+      : null;
     return (
       <div>
         <TitleBar toggleDrawer={this.toggleDrawer}/>
@@ -106,6 +118,7 @@ class MainMenu extends React.Component {
           {menuItems}
         </Drawer>
         {deletion}
+        {about}
       </div>
     );
   }

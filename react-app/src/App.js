@@ -2,7 +2,7 @@ import React from 'react';
 
 import Auth from './comps/auth/auth';
 import Bubble from './comps/notification/notification';
-import MainMenu from './comps/main/menu';
+import MainMenu from './comps/menus/mainMenu';
 import Translate from './comps/translate/translate';
 
 export default class MainView extends React.Component {
