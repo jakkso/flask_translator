@@ -4,15 +4,15 @@ import withStyles from '@material-ui/core/styles/withStyles';
 
 
 import {styles} from '../styles/styles'
-import CssBaseline from "@material-ui/core/CssBaseline/CssBaseline";
-import Paper from "@material-ui/core/Paper/Paper";
 import Avatar from "@material-ui/core/Avatar/Avatar";
-import LockOutlinedIcon from "@material-ui/core/SvgIcon/SvgIcon";
-import Typography from "@material-ui/core/Typography/Typography";
-import FormControl from "@material-ui/core/FormControl/FormControl";
-import InputLabel from "@material-ui/core/InputLabel/InputLabel";
-import Input from "@material-ui/core/Input/Input";
 import Button from "@material-ui/core/Button/Button";
+import CssBaseline from "@material-ui/core/CssBaseline/CssBaseline";
+import FormControl from "@material-ui/core/FormControl/FormControl";
+import Input from "@material-ui/core/Input/Input";
+import InputLabel from "@material-ui/core/InputLabel/InputLabel";
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import Typography from "@material-ui/core/Typography/Typography";
+import Paper from "@material-ui/core/Paper/Paper";
 
 
 const Login = (props) => {
@@ -24,6 +24,7 @@ const Login = (props) => {
     toggleModal,
     resetPassword,
     classes,
+    children
   } = props;
   return (
     <main className={classes.main}>
@@ -88,6 +89,7 @@ const Login = (props) => {
           Forget Password?
         </Button>
       </Paper>
+      {children}
     </main>
   );
 };

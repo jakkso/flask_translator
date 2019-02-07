@@ -1,25 +1,13 @@
 import React from 'react';
 
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import FormControl from '@material-ui/core/FormControl';
-import Input from '@material-ui/core/Input';
-import InputLabel from '@material-ui/core/InputLabel';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Modal from "@material-ui/core/Modal/Modal";
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-import withStyles from '@material-ui/core/styles/withStyles';
-
+import Login from './login';
 import NewPassword from './newPassword';
+import Register from "./registration";
 import ResetPassword from './resetPasswordRequest';
-import {styles} from '../styles/styles'
 import Unactivated from './unactivated';
 
 
-
-class Auth extends React.Component {
+export default class Auth extends React.Component {
   state = {
     username: '',
     password: '',
@@ -50,6 +38,10 @@ class Auth extends React.Component {
     this.setState((prevState => {
       return {registration: !prevState.registration,};
     }))
+  };
+
+  setResetPassword = () => {
+    this.setState({resetPassword: true})
   };
 
   componentDidMount() {
@@ -200,7 +192,6 @@ class Auth extends React.Component {
   };
 
   render() {
-    const {classes} = this.props;
     const {
       username,
       password,
@@ -210,15 +201,17 @@ class Auth extends React.Component {
       resetPassword,
       passwordResetToken
     } = this.state;
+    let displayItem;
+
     if (unactivated) {
-      return (
+      displayItem = (
         <Unactivated
           sendReq={this.reqActivationEmail}
           logout={this.clearState}
         />
       )
     } else if (resetPassword) {
-      return (
+      displayItem = (
         <ResetPassword
           username={username}
           onChange={this.onChange}
@@ -227,7 +220,7 @@ class Auth extends React.Component {
         />
       )
     } else if (passwordResetToken) {
-      return (
+      displayItem = (
         <NewPassword
           password={password}
           password2={password2}
@@ -236,140 +229,30 @@ class Auth extends React.Component {
           logout={this.clearState}
         />
       )
+    } else {
+      const registerModal = registration ?
+        <Register
+          password={password}
+          password2={password2}
+          onChange={this.onChange}
+          onSubmit={this.registrationHandler}
+          toggleModal={this.toggleModal}
+        />: null;
+      displayItem = (
+        <Login
+          username={username}
+          password={password}
+          onChange={this.onChange}
+          onSubmit={this.loginHandler}
+          toggleModal={this.toggleModal}
+          resetPassword={this.setResetPassword}
+        >
+          {registerModal}
+        </Login>
+      )
     }
     return (
-      <main className={classes.main}>
-        <CssBaseline />
-        <Paper className={classes.paper}>
-          <Avatar className={classes.avatar}>
-            <LockOutlinedIcon />
-          </Avatar>
-          <Typography component="h1" variant="h5">
-            Sign in
-          </Typography>
-          <form className={classes.form}>
-            <FormControl margin="normal" required fullWidth>
-              <InputLabel htmlFor="email">Email Address</InputLabel>
-              <Input
-                id="username"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={username}
-                onChange={this.onChange}
-              />
-            </FormControl>
-            <FormControl margin="normal" required fullWidth>
-              <InputLabel htmlFor="password">Password</InputLabel>
-              <Input
-                name="password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={this.onChange}
-              />
-            </FormControl>
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              className={classes.submit}
-              onSubmit={this.loginHandler}
-              onClick={this.loginHandler}
-            >
-              Sign in
-            </Button>
-          </form>
-          <Button
-            variant="contained"
-            color="secondary"
-            className={classes.submit}
-            onClick={this.toggleModal}
-            fullWidth
-          >
-            Register
-          </Button>
-          <Button
-            fullWidth
-            variant="contained"
-            className={classes.submit}
-            onClick={()=>{this.setState({resetPassword: true})}}
-          >
-            Forget Password?
-          </Button>
-        </Paper>
-        <Modal
-          aria-labelledby="simple-modal-title"
-          aria-describedby="simple-modal-description"
-          open={registration}
-          onClose={this.toggleModal}
-        >
-          <div className={classes.modal}>
-            <Typography variant="h6" id="modal-title">
-              Register
-            </Typography>
-            <form>
-              <FormControl
-                margin="normal"
-                required
-                fullWidth
-              >
-                <InputLabel htmlFor="username">Email Address</InputLabel>
-                <Input
-                  id="username"
-                  name="username"
-                  autoComplete="email"
-                  autoFocus
-                  value={username}
-                  onChange={this.onChange}
-                />
-              </FormControl>
-              <FormControl
-                margin="normal"
-                required
-                fullWidth
-              >
-                <InputLabel htmlFor="password">Password</InputLabel>
-                <Input
-                  id="password"
-                  name="password"
-                  value={password}
-                  onChange={this.onChange}
-                  type="password"
-                />
-              </FormControl>
-              <FormControl
-                margin="normal"
-                required
-                fullWidth
-              >
-                <InputLabel htmlFor="password2">Repeat Password</InputLabel>
-                <Input
-                  id="password2"
-                  name="password2"
-                  value={password2}
-                  onChange={this.onChange}
-                  type="password"
-                />
-              </FormControl>
-              <Button
-                fullWidth
-                variant="contained"
-                color="primary"
-                className={classes.submit}
-                onSubmit={this.registrationHandler}
-                onClick={this.registrationHandler}
-              >
-                Submit
-              </Button>
-            </form>
-          </div>
-        </Modal>
-      </main>
+      displayItem
     );
   }
 }
-
-export default withStyles(styles)(Auth)
