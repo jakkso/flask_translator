@@ -28,7 +28,7 @@ class Config:
     MAIL_PASSWORD = env.get("mail_password")
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    MAIL_SERVER = "smtp.gmail.com"
-    MAIL_PORT = 587
+    MAIL_SERVER = env.get('mail_server')
+    MAIL_PORT = env.get('mail_port')
 
     FRONT_END_URL = env.get("front_end_url")
