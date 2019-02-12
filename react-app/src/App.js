@@ -6,7 +6,7 @@ import MainMenu from './comps/menus/mainMenu';
 import Translate from './comps/translate/translate';
 
 export default class MainView extends React.Component {
-  baseUrl = 'http://localhost:5000/';
+  baseUrl = 'http://localhost/api/';
   state = {
     infoText: '',
     accessToken: null,

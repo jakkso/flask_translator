@@ -8,18 +8,10 @@ services:
       dockerfile: Dockerfile-flask
     volumes:
       - "./flask_back_end/:/app"
-
-  nginx:
-    image: nginx-translate
-    build:
-      context: ./nginx/
-      dockerfile: Dockerfile-nginx
     ports:
-      - 5000:80
-    depends_on:
-      - flask-api
+      - 5000:5000
 
-  react:
+  client:
     image: react-translate
     build:
       context: ./react-app/
@@ -28,3 +20,14 @@ services:
       - 3000:3000
     depends_on:
       - flask-api
+
+  nginx:
+    image: nginx-translate
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 80:80
+    depends_on:
+      - flask-api
+      - react
