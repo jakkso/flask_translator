@@ -1,0 +1,30 @@
+version: '3'
+services:
+
+  flask-api:
+    image: flask-translate
+    build:
+      context: ./flask_back_end/
+      dockerfile: Dockerfile-flask
+    volumes:
+      - "./flask_back_end/:/app"
+
+  nginx:
+    image: nginx-translate
+    build:
+      context: ./nginx/
+      dockerfile: Dockerfile-nginx
+    ports:
+      - 5000:80
+    depends_on:
+      - flask-api
+
+  react:
+    image: react-translate
+    build:
+      context: ./react-app/
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      - flask-api

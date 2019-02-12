@@ -1,0 +1,23 @@
+FROM python:3.6
+# -alpine
+
+
+ENV APP /app
+RUN mkdir $APP
+WORKDIR $APP
+
+EXPOSE 5000
+
+# Install dev dependancies in order to build uWSGI
+#RUN apk add python3-dev build-base linux-headers pcre-dev
+
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+# --no-cache-dir not quite sure this is needed for pip install command.
+
+# Add project files after installation to prevent cache invalidation from pip installation
+# Should prevent having to download all libraries after changing project files
+COPY . .
+
+CMD ["uwsgi", "--ini", "app.ini"]
