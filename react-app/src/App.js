@@ -6,7 +6,7 @@ import MainMenu from './comps/menus/mainMenu';
 import Translate from './comps/translate/translate';
 
 export default class MainView extends React.Component {
-  baseUrl = 'http://localhost/api/';
+  baseUrl = process.env.FLASK_API_URL;
   state = {
     infoText: '',
     accessToken: null,

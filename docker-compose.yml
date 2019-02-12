@@ -18,6 +18,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - 3000:3000
+    environment:
+      - FLASK_API_URL=${FLASK_API_URL}
     depends_on:
       - flask-api
 
