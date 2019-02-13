@@ -1,0 +1,16 @@
+FROM python:3.6.5-alpine
+
+RUN apk update && \
+    apk add --virtual build-deps gcc python-dev musl-dev && \
+    apk add postgresql-dev && \
+    apk add netcat-openbsd
+
+WORKDIR /usr/src/app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+RUN chmod +x entrypoint-dev.sh
+
+CMD ["./entrypoint-dev.sh"]
