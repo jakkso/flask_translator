@@ -15,13 +15,13 @@ services:
     image: react-translate
     build:
       context: ./react-app/
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-client
     ports:
       - 3000:3000
-    environment:
-      - FLASK_API_URL=${FLASK_API_URL}
     depends_on:
       - flask-api
+    volumes:
+      - './env.json:/usr/src/app/src/env.json'
 
   nginx:
     image: nginx-translate
@@ -32,4 +32,4 @@ services:
       - 80:80
     depends_on:
       - flask-api
-      - react
+      - client

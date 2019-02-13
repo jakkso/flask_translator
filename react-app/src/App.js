@@ -5,8 +5,11 @@ import Bubble from './comps/notification/notification';
 import MainMenu from './comps/menus/mainMenu';
 import Translate from './comps/translate/translate';
 
+import env from './env.json';
+
+
 export default class MainView extends React.Component {
-  baseUrl = process.env.FLASK_API_URL;
+  baseUrl = env.FLASK_API_URL;
   state = {
     infoText: '',
     accessToken: null,
@@ -41,7 +44,7 @@ export default class MainView extends React.Component {
     const headers = {...{'Content-Type': 'application/json'}, ...additionalHeaders};
     const options = {
       method: method,
-    mode: 'cors',
+      mode: 'cors',
       headers: headers,
       body: JSON.stringify(body)
   };
