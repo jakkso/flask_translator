@@ -1,0 +1,32 @@
+FROM node:10.15.1-alpine as builder
+
+WORKDIR /usr/src/app
+
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
+COPY package.json /usr/src/app/package.json
+RUN npm install && npm install react-scripts@2.1.2 -g
+
+# Environmental Variables, must be set prior to build
+# For vars to be used by react, they must begin with `REACT_APP_`
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL $REACT_APP_API_URL
+ARG NODE_ENV
+ENV NODE_ENV $NODE_ENV
+
+###########
+## Build ##
+###########
+
+COPY . /usr/src/app
+RUN npm run build
+
+
+###########
+## Final ##
+###########
+
+FROM nginx:1.15.0-alpine
+
+COPY --from=builder /usr/src/app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

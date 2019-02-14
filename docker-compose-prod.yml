@@ -7,7 +7,7 @@ services:
       context: ./flask_back_end/
       dockerfile: Dockerfile-prod
     volumes:
-      - "./flask_back_end/:/app"
+      - "./flask_back_end/:/usr/src/app"
     ports:
       - 5000:5000
 
@@ -16,12 +16,13 @@ services:
     build:
       context: ./react-app/
       dockerfile: Dockerfile-prod
+      args:
+        - NODE_ENV=production
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
     ports:
-      - 3000:3000
+      - 3000:80
     depends_on:
       - flask-api
-    volumes:
-      - './env.json:/usr/src/app/src/env.json'
 
   nginx:
     image: nginx-translate

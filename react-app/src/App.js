@@ -5,11 +5,10 @@ import Bubble from './comps/notification/notification';
 import MainMenu from './comps/menus/mainMenu';
 import Translate from './comps/translate/translate';
 
-import env from './env.json';
 
 
 export default class MainView extends React.Component {
-  baseUrl = env.FLASK_API_URL;
+  baseUrl = process.env.REACT_APP_API_URL;  // custom env var must start with REACT_APP_
   state = {
     infoText: '',
     accessToken: null,

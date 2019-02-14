@@ -2,6 +2,11 @@ FROM node:10.15.1-alpine
 
 WORKDIR /usr/src/app
 
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL $REACT_APP_API_URL
+ARG NODE_ENV
+ENV NODE_ENV $NODE_ENV
+
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 COPY package.json /usr/src/app/package.json
 RUN npm install && npm install react-scripts@1.1.1 -g

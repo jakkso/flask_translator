@@ -16,12 +16,13 @@ services:
     build:
       context: ./react-app/
       dockerfile: Dockerfile-dev
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
+        - NODE_ENV=development
     ports:
       - 3000:3000
     depends_on:
       - flask-api
-    volumes:
-      - './env.json:/usr/src/app/src/env.json'
 
   nginx:
     image: nginx-translate
