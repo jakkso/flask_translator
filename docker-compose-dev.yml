@@ -7,7 +7,7 @@ services:
       context: ./flask_back_end/
       dockerfile: Dockerfile-dev
     volumes:
-      - "./flask_back_end/:/app"
+      - "./flask_back_end/:/usr/src/app"
     ports:
       - 5000:5000
 
