@@ -4,4 +4,5 @@
 # DB engine, so in the future, checking that postgres is accessible
 # will be done here.
 
+export FLASK_DEBUG=1
 python app.py
