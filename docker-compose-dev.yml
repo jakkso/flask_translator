@@ -1,7 +1,7 @@
 version: '3'
 services:
   db:
-    image: db-translate
+    image: db-trans-dev
     build:
       context: back_end/db
       dockerfile: Dockerfile-dev
@@ -14,7 +14,7 @@ services:
      - pgdata:/var/lib/postgresql/data
 
   flask-api:
-    image: flask-translate
+    image: flask-trans-dev
     build:
       context: back_end/
       dockerfile: Dockerfile-dev
@@ -30,7 +30,7 @@ services:
      - flask.env
 
   client:
-    image: react-translate
+    image: react-trans-dev
     build:
       context: ./react-app/
       dockerfile: Dockerfile-dev
@@ -44,7 +44,7 @@ services:
       - db
 
   nginx:
-    image: nginx-translate
+    image: nginx-trans-dev
     build:
       context: ./nginx/
       dockerfile: Dockerfile-dev
