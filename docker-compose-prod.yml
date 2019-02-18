@@ -52,3 +52,6 @@ services:
     depends_on:
       - flask-api
       - client
+
+volumes:
+  pgdata:

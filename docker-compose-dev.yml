@@ -10,8 +10,8 @@ services:
     environment:
      - POSTGRES_USER=postgres
      - POSTGRES_PASSWORD=postgres
-   volumes:
-     - pgdata:/var/lib/postgresql/data
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   flask-api:
     image: flask-trans-dev
@@ -53,3 +53,6 @@ services:
     depends_on:
       - flask-api
       - client
+
+volumes:
+  pgdata:
