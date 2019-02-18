@@ -1,6 +1,5 @@
 version: '3'
 services:
-
   db:
     image: db-translate
     build:
@@ -11,6 +10,8 @@ services:
     environment:
      - POSTGRES_USER=postgres
      - POSTGRES_PASSWORD=postgres
+   volumes:
+     - pgdata:/var/lib/postgresql/data
 
   flask-api:
     image: flask-translate
@@ -34,8 +35,8 @@ services:
       context: ./react-app/
       dockerfile: Dockerfile-dev
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL}
         - NODE_ENV=development
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
     ports:
       - 3000:3000
     depends_on:
