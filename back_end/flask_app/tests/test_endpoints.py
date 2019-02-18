@@ -33,14 +33,16 @@ def test_registration(app) -> None:
     assert "This field cannot be blank" == body["message"].get("username")
 
     bad_username = client().post(
-        "/api/user/registration", data={"username": "bob", "password": "hunter2hunter222"}
+        "/api/user/registration",
+        data={"username": "bob", "password": "hunter2hunter222"},
     )
     assert 400 == bad_username.status_code
     body = json.loads(bad_username.data.decode("utf-8"))
     assert "Invalid email address" == body["message"]
 
     bad_password = client().post(
-        "/api/user/registration", data={"username": "bob@bob.com", "password": "hunter2"}
+        "/api/user/registration",
+        data={"username": "bob@bob.com", "password": "hunter2"},
     )
     assert 400 == bad_password.status_code
     body = json.loads(bad_password.data.decode("utf-8"))
@@ -48,12 +50,11 @@ def test_registration(app) -> None:
 
     bob = client().post(
         "/api/user/registration",
-        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+        data={"username": "bob@bob.com", "password": "hunter2hunter2hunter2"},
     )
     assert 201 == bob.status_code
     body = json.loads(bob.data.decode("utf-8"))
     assert "User bob@bob.com was created" == body["message"]
-
     duplicate_bob = client().post(
         "/api/user/registration",
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
@@ -77,7 +78,9 @@ def test_activate_put(app) -> None:
         token = create_access_token("bob@bob.com")
         token_2 = create_access_token("bob@bob.com")
         bad_email = create_access_token("not_bob@bob.com")
-    resp = client().put("/api/user/activate", headers={"Authorization": f"Bearer {token}"})
+    resp = client().put(
+        "/api/user/activate", headers={"Authorization": f"Bearer {token}"}
+    )
     assert 201 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User bob@bob.com has been verified" == body["message"]
@@ -158,7 +161,8 @@ def test_login(app) -> None:
         data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     unverified = client().post(
-        "/api/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
+        "/api/user/login",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     assert unverified.status_code == 401
     body = json.loads(unverified.data.decode("utf-8"))
@@ -192,7 +196,8 @@ def test_logout_access(app) -> None:
         token = create_access_token("bob@bob.com")
     client().put("/api/user/activate", headers={"Authorization": f"Bearer {token}"})
     bob = client().post(
-        "/api/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
+        "/api/user/login",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]
@@ -220,7 +225,8 @@ def test_logout_refresh(app) -> None:
         token = create_access_token("bob@bob.com")
     client().put("/api/user/activate", headers={"Authorization": f"Bearer {token}"})
     bob = client().post(
-        "/api/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
+        "/api/user/login",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     refresh_token = body["refresh_token"]
@@ -246,7 +252,8 @@ def test_refresh_access(app) -> None:
         token = create_access_token("bob@bob.com")
     client().put("/api/user/activate", headers={"Authorization": f"Bearer {token}"})
     bob = client().post(
-        "/api/user/login", data={"username": "bob@bob.com", "password": "hunter2hunter222"}
+        "/api/user/login",
+        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
     )
     body = json.loads(bob.data.decode("utf-8"))
     access_token = body["access_token"]

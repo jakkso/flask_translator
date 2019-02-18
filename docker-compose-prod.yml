@@ -4,7 +4,7 @@ services:
   flask-api:
     image: flask-translate
     build:
-      context: ./flask_back_end/
+      context: back_end/
       dockerfile: Dockerfile-prod
     volumes:
       - "./flask_back_end/:/usr/src/app"

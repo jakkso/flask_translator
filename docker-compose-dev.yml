@@ -1,15 +1,32 @@
 version: '3'
 services:
 
+  db:
+    image: db-translate
+    build:
+      context: back_end/db
+      dockerfile: Dockerfile-dev
+    ports:
+     - 5435:5432
+    environment:
+     - POSTGRES_USER=postgres
+     - POSTGRES_PASSWORD=postgres
+
   flask-api:
     image: flask-translate
     build:
-      context: ./flask_back_end/
+      context: back_end/
       dockerfile: Dockerfile-dev
-    volumes:
-      - "./flask_back_end/:/usr/src/app"
     ports:
       - 5000:5000
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/dev
+      - DATABASE_TEST_URL=postgres://postgres:postgres@db:5432/test
+      - DATABASE_PROD_URL=postgres://postgres:postgres@db:5432/prod
+    depends_on:
+     - db
+    env_file:
+     - flask.env
 
   client:
     image: react-translate
@@ -23,6 +40,7 @@ services:
       - 3000:3000
     depends_on:
       - flask-api
+      - db
 
   nginx:
     image: nginx-translate

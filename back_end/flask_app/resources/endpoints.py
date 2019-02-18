@@ -1,6 +1,7 @@
 """
 Contains API endpoint definitions
 """
+from smtplib import SMTPAuthenticationError
 
 from flask import render_template
 from flask_jwt_extended import (
@@ -51,16 +52,18 @@ class UserRegistration(Resource):
         elif not UserModel.validate_password(data["password"]):
             return {"message": "Invalid password"}, 400
         else:
+            token_ = create_access_token(identity=new_user.username)
+            confirm_url = generate_activation_url("activate", token_)
+            subject = "Please confirm your email address"
+            html = render_template("activate.html", confirm_url=confirm_url)
             try:
-                token_ = create_access_token(identity=new_user.username)
-                confirm_url = generate_activation_url("activate", token_)
-                subject = "Please confirm your email address"
-                html = render_template("activate.html", confirm_url=confirm_url)
-                send_email(new_user.username, subject, html)
                 new_user.save_to_db()
+                send_email(new_user.username, subject, html)
                 return {"message": f'User {data["username"]} was created'}, 201
-            except:
-                return {"message": "Something went wrong"}, 500
+            except SMTPAuthenticationError:  # gmail is screwing with me, asking for auth instead of sending the email.
+                pass
+            # return {'message': f'{confirm_url}'}, 201
+            return {"message": "Something went wrong"}, 500
 
 
 class UserActivation(Resource):
