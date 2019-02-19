@@ -30,7 +30,8 @@ export default class MainView extends React.Component {
    * @return {{ok}|Object}
    */
   handleErrors = (response) => {
-    if (!response.ok && (response.status !== 400 && response.status !== 500)) {
+    const errors = [400, 401, 500];
+    if (!response.ok && !errors.includes(response.status)) {
       console.error(response);
       throw Error(response);
     } else {
@@ -125,11 +126,9 @@ export default class MainView extends React.Component {
     const {accessToken, refreshToken} = this.state;
     this.setState({accessToken: null, refreshToken: null});
     const headers = {'Authorization': `Bearer ${accessToken}`};
-    let resp = await this.sendRequest({}, 'logout/access', headers);
-    if (resp.error) this.createSnackbar(resp.error);
+    await this.sendRequest({}, 'logout/access', headers);
     headers['Authorization'] = `Bearer ${refreshToken}`;
-    resp = await this.sendRequest({}, 'logout/refresh', headers);
-    if (resp.error) this.createSnackbar(resp.error);
+    await this.sendRequest({}, 'logout/refresh', headers);
   };
 
   render() {

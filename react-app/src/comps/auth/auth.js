@@ -156,8 +156,8 @@ export default class Auth extends React.Component {
       this.clearState();
     } else if (resp.message === `User ${username} was created`){
       this.setState({unactivated: true});
-      createSnackbar(resp.message);
     }
+    createSnackbar(resp.message);
   };
 
   /**

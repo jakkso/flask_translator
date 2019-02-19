@@ -4,11 +4,13 @@ Contains app creation functionality
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask.logging import default_handler
 from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 
+from flask_app.logger import formatter
 from settings import Config
 
 
@@ -39,18 +41,19 @@ def create_app(test_config=None) -> Flask:
     with app.app_context():
         db.init_app(app)
         db.create_all()
+    default_handler.setFormatter(formatter)  # logging formatter
     api = Api(app)
     CORS(app)
     jwt.init_app(app)
     mail.init_app(app)
     Migrate(app, db)
-    api.add_resource(endpoints.UserLogin, "/api/user/login")
-    api.add_resource(endpoints.UserRegistration, "/api/user/registration")
-    api.add_resource(endpoints.UserActivation, "/api/user/activate")
-    api.add_resource(endpoints.UserResetPassword, "/api/user/reset_password")
-    api.add_resource(endpoints.UserDeletion, "/api/user/delete")
-    api.add_resource(endpoints.UserLogoutAccess, "/api/logout/access")
-    api.add_resource(endpoints.UserLogoutRefresh, "/api/logout/refresh")
-    api.add_resource(endpoints.TokenRefresh, "/api/token/refresh")
-    api.add_resource(endpoints.SecretResource, "/api/translate")
+    api.add_resource(endpoints.UserLogin, "/api/user/login", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserRegistration, "/api/user/registration", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserActivation, "/api/user/activate", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserResetPassword, "/api/user/reset_password", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserDeletion, "/api/user/delete", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserLogoutAccess, "/api/logout/access", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.UserLogoutRefresh, "/api/logout/refresh", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.TokenRefresh, "/api/token/refresh", resource_class_kwargs={'logger': app.logger})
+    api.add_resource(endpoints.SecretResource, "/api/translate", resource_class_kwargs={'logger': app.logger})
     return app
