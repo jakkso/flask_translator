@@ -1,6 +1,8 @@
 sudo: required
 services:
 - docker
+env:
+  DOCKER_COMPOSE_VERSION: 1.23.2
 before_install:
 - openssl aes-256-cbc -K $encrypted_b3bfd8ea431a_key -iv $encrypted_b3bfd8ea431a_iv -in flask.env.enc -out flask.env -d
 - sudo rm /usr/local/bin/docker-compose
