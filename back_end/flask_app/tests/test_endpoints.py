@@ -88,7 +88,7 @@ def test_activate_put(app) -> None:
     resp = client().put(
         "/api/user/activate", headers={"Authorization": f"Bearer {token_2}"}
     )
-    assert 200 == resp.status_code
+    assert 400 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
     assert "User already verified" == body["message"]
     # Bad token
@@ -123,7 +123,7 @@ def test_activate_post(app) -> None:
     client = app.test_client
     client().post(
         "/api/user/registration",
-        data={"username": "bob@bob.com", "password": "hunter2hunter222"},
+        data={"username": "bob@bob.com", "password": "hunter2hunter2hunter2"},
     )
     resp = client().post("/api/user/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
@@ -134,7 +134,7 @@ def test_activate_post(app) -> None:
     body = json.loads(resp.data.decode("utf-8"))
     assert resp.status_code == 400
     assert body["message"] == "Bad credentials"
-    data["password"] = "hunter2hunter222"
+    data["password"] = "hunter2hunter2hunter2"
     resp = client().post("/api/user/activate", data=data)
     body = json.loads(resp.data.decode("utf-8"))
     assert 201 == resp.status_code

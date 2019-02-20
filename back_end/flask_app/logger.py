@@ -13,12 +13,6 @@ class RequestFormatter(logging.Formatter):
         return super().format(record)
 
 
-formatter = RequestFormatter(
-    '[%(asctime)s] %(remote_addr)s requested %(url)s\n'
-    '%(levelname)s in %(module)s: %(message)s'
-)
-
-
 def fmt(method: str, username: str, description: str) -> str:
     """
     Log message formatter
@@ -27,4 +21,10 @@ def fmt(method: str, username: str, description: str) -> str:
     :param description: event description
     :return: string
     """
-    return f'Method: {method} | Username: `{username}` | {description}'
+    return f"Method: {method} | Username: `{username}` | {description}"
+
+
+formatter = RequestFormatter(
+    "[%(asctime)s] %(remote_addr)s requested %(url)s\n"
+    "%(levelname)s in %(module)s: %(message)s"
+)
