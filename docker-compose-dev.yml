@@ -23,11 +23,10 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/dev
       - DATABASE_TEST_URL=postgres://postgres:postgres@db:5432/test
-      - DATABASE_PROD_URL=postgres://postgres:postgres@db:5432/prod
     depends_on:
-     - db
+      - db
     env_file:
-     - flask.env
+      - flask.env
 
   client:
     image: react-trans-dev
