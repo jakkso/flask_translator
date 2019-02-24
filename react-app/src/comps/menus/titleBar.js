@@ -23,12 +23,12 @@ const styles = {
 
 
 function TitleBar(props) {
-  const { classes } = props;
+  const { classes, toggleDrawer } = props;
   return (
     <div className={classes.root}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton className={classes.menuButton} color="inherit" aria-label="Menu" onClick={props.toggleDrawer}>
+          <IconButton className={classes.menuButton} color="inherit" aria-label="Menu" onClick={toggleDrawer}>
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" color="inherit" className={classes.grow}>

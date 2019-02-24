@@ -40,7 +40,7 @@ export default class Auth extends React.Component {
     }))
   };
 
-  setResetPassword = () => {
+  togglePasswordReset = () => {
     this.setState({resetPassword: true})
   };
 
@@ -70,8 +70,8 @@ export default class Auth extends React.Component {
    * @return {Promise<void>}
    */
   activationHandler = async (token) => {
-    const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
+    const {createSnackbar, sendRequest} = this.props;
+    const resp = await sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
     if (resp.error) createSnackbar(resp.error);
     else if (resp.msg) createSnackbar('Link invalid or expired');
     else if (resp.message) createSnackbar(resp.message);
@@ -121,9 +121,9 @@ export default class Auth extends React.Component {
   loginHandler = async (event) => {
     if (event) event.preventDefault();
     const {username, password} = this.state;
-    const {createSnackbar, setTokens} = this.props;
+    const {createSnackbar, setTokens, sendRequest} = this.props;
     if (!username || !password) return createSnackbar('Username and password required');
-    const resp = await this.props.sendRequest({username: username, password: password}, 'user/login');
+    const resp = await sendRequest({username: username, password: password}, 'user/login');
     if (resp.error){
       createSnackbar(resp.error);
     } else {
@@ -149,8 +149,8 @@ export default class Auth extends React.Component {
     if (event) event.preventDefault();
     if (!this.validateUsername() || !this.validatePassword()) return;
     const {username, password} = this.state;
-    const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({username: username, password: password}, 'user/registration');
+    const {createSnackbar, sendRequest} = this.props;
+    const resp = await sendRequest({username: username, password: password}, 'user/registration');
     if (resp.error) {
       createSnackbar(resp.error);
       this.clearState();
@@ -167,9 +167,9 @@ export default class Auth extends React.Component {
   passwordResetHandler = async (event) => {
     if (event) event.preventDefault();
     const {passwordResetToken, password} = this.state;
-    const {createSnackbar} = this.props;
+    const {createSnackbar, sendRequest} = this.props;
     if (!this.validatePassword()) return;
-    const resp = await this.props.sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
+    const resp = await sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
     if (resp.error) createSnackbar(resp.error);
     else if (resp.msg) createSnackbar('Link invalid or expired');
     else if (resp.message) createSnackbar(resp.message);
@@ -182,8 +182,8 @@ export default class Auth extends React.Component {
    */
   reqActivationEmail = async () => {
     const {username, password} = this.state;
-    const {createSnackbar} = this.props;
-    const resp = await this.props.sendRequest({username: username, password: password}, 'user/activate');
+    const {createSnackbar, sendRequest} = this.props;
+    const resp = await sendRequest({username: username, password: password}, 'user/activate');
     if (resp.error) createSnackbar(resp.error);
     else if (resp.message === 'Bad credentials') {
       this.clearState();
@@ -198,9 +198,9 @@ export default class Auth extends React.Component {
   reqPasswordReset = async (event) => {
     if (event) event.preventDefault();
     const {username} = this.state;
-    const {createSnackbar} = this.props;
+    const {createSnackbar, sendRequest} = this.props;
     if (!username) return createSnackbar('Please enter your email');
-    const resp = await this.props.sendRequest({username: username}, 'user/reset_password');
+    const resp = await sendRequest({username: username}, 'user/reset_password');
     if (resp.error) createSnackbar(resp.error);
     else createSnackbar('Sending email...');
     this.clearState();
@@ -260,7 +260,7 @@ export default class Auth extends React.Component {
           onChange={this.onChange}
           onSubmit={this.loginHandler}
           toggleModal={this.toggleModal}
-          resetPassword={this.setResetPassword}
+          resetPassword={this.togglePasswordReset}
         >
           {registerModal}
         </Login>

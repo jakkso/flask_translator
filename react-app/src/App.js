@@ -135,7 +135,7 @@ export default class MainView extends React.Component {
     const {accessToken, refreshToken, infoText} = this.state;
     const loggedIn = accessToken && refreshToken;
     const translator = loggedIn ?
-      <Translate sendReq={this.sendTranslateRequest} logout={this.logout}/>
+      <Translate sendReq={this.sendTranslateRequest} />
       : <Auth
         sendRequest={this.sendRequest}
         createSnackbar={this.createSnackbar}

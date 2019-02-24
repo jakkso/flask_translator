@@ -30,13 +30,13 @@ class DeleteAccount extends  React.Component {
 
   render() {
     const {password} = this.state;
-    const {classes} = this.props;
+    const {classes, onCancel} = this.props;
     return (
       <Modal
         aria-labelledby="simple-modal-title"
         aria-describedby="simple-modal-description"
         open={true}
-        onClose={this.props.onCancel}
+        onClose={onCancel}
       >
         <main className={classes.modal}>
           <Paper className={classes.paper}>
@@ -77,7 +77,7 @@ class DeleteAccount extends  React.Component {
                 variant="contained"
                 color="secondary"
                 className={classes.submit}
-                onClick={this.props.onCancel}
+                onClick={onCancel}
               >
                 Cancel
             </Button>
