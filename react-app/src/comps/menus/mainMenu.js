@@ -12,7 +12,10 @@ import ListItemText from '@material-ui/core/ListItemText';
 
 import AboutModal from './about';
 import DeleteAccount from '../auth/deleteAccount';
+import sendRequest from '../../scripts/sendRequest';
 import TitleBar from "./titleBar";
+import connect from "react-redux/es/connect/connect";
+import { setInfoText } from "../../actions";
 
 
 const styles = {
@@ -56,14 +59,16 @@ class MainMenu extends React.Component {
   };
 
   deleteAccount = async (password) => {
-    const {sendRequest, getFreshAuthHeader, createSnackbar} = this.props;
-    const headers = await getFreshAuthHeader();
+    const { refreshAccessToken } = this.props;
+    const success = await refreshAccessToken();
+    if (!success) return;
+    const headers = {'Authorization': `Bearer ${this.props.tokens.accessToken}`};
     const resp = await sendRequest({password: password}, 'user/delete', headers, 'DELETE');
     if (resp.error) {
-      createSnackbar(resp.error);
+      this.props.setInfoText(resp.error);
       this.toggleDeleteAccount();
     } else if (resp.message) {
-      createSnackbar(resp.message);
+      this.props.setInfoText(resp.message);
       if (resp.message.includes('deleted')) {
         this.toggleDeleteAccount();
         this.logout();
@@ -127,4 +132,7 @@ class MainMenu extends React.Component {
   }
 }
 
-export default withStyles(styles)(MainMenu);
+const mapStateToProps = state => ({ tokens: state.tokens });
+
+const ConnectedMainMenu = connect(mapStateToProps, { setInfoText })(withStyles(styles)(MainMenu));
+export default ConnectedMainMenu

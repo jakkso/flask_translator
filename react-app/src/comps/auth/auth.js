@@ -1,13 +1,16 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 import Login from './login';
 import NewPassword from './newPassword';
 import Register from "./registration";
 import ResetPassword from './resetPasswordRequest';
+import sendRequest from '../../scripts/sendRequest';
 import Unactivated from './unactivated';
+import {setAccessToken, setInfoText, setRefreshToken} from "../../actions";
 
 
-export default class Auth extends React.Component {
+class Auth extends React.Component {
   state = {
     username: '',
     password: '',
@@ -70,11 +73,10 @@ export default class Auth extends React.Component {
    * @return {Promise<void>}
    */
   activationHandler = async (token) => {
-    const {createSnackbar, sendRequest} = this.props;
     const resp = await sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
-    if (resp.error) createSnackbar(resp.error);
-    else if (resp.msg) createSnackbar('Link invalid or expired');
-    else if (resp.message) createSnackbar(resp.message);
+    if (resp.error) this.props.setInfoText(resp.error);
+    else if (resp.msg) this.props.setInfoText('Link invalid or expired');
+    else if (resp.message) this.props.setInfoText(resp.message);
     this.clearState();
   };
 
@@ -86,10 +88,9 @@ export default class Auth extends React.Component {
    */
   validateUsername() {
     const {username} = this.state;
-    const {createSnackbar} = this.props;
     const re = /[^@]+@[^@]+\.[^@]+/;
     if (!re.test(username)) {
-      createSnackbar('Invalid email address');
+      this.props.setInfoText('Invalid email address');
       return false;
     }
     return true;
@@ -101,13 +102,12 @@ export default class Auth extends React.Component {
    */
   validatePassword() {
     const {password, password2} = this.state;
-    const {createSnackbar} = this.props;
     const re = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{14,}$/;
     if (!re.test(password)) {
-      createSnackbar('Passwords must be at least 14 characters and have a letter and number');
+      this.props.setInfoText('Passwords must be at least 14 characters and have a letter and number');
       return false;
     } else if (password !== password2) {
-      createSnackbar('Passwords do not match');
+      this.props.setInfoText('Passwords do not match');
       return false;
     }
     return true;
@@ -121,19 +121,24 @@ export default class Auth extends React.Component {
   loginHandler = async (event) => {
     if (event) event.preventDefault();
     const {username, password} = this.state;
-    const {createSnackbar, setTokens, sendRequest} = this.props;
-    if (!username || !password) return createSnackbar('Username and password required');
+    if (!username || !password) {
+      this.props.setInfoText('Username and password required');
+      return;
+    }
     const resp = await sendRequest({username: username, password: password}, 'user/login');
     if (resp.error){
-      createSnackbar(resp.error);
+      this.props.setInfoText(resp.error);
     } else {
       switch (resp.message) {
         case 'Bad credentials':
-          return createSnackbar('Bad username or password');
+          this.props.setInfoText('Bad username or password');
+          break;
         case 'Unverified email address':
           return this.setState({unactivated: true});
         case `Logged in as ${username}`:
-          return setTokens(resp.access_token, resp.refresh_token);
+          this.props.setAccessToken(resp.access_token);
+          this.props.setRefreshToken(resp.refresh_token);
+          break;
         default:
           return;
       }
@@ -149,15 +154,14 @@ export default class Auth extends React.Component {
     if (event) event.preventDefault();
     if (!this.validateUsername() || !this.validatePassword()) return;
     const {username, password} = this.state;
-    const {createSnackbar, sendRequest} = this.props;
     const resp = await sendRequest({username: username, password: password}, 'user/registration');
     if (resp.error) {
-      createSnackbar(resp.error);
+      this.props.setInfoText(resp.error);
       this.clearState();
     } else if (resp.message === `User ${username} was created`){
       this.setState({unactivated: true});
     }
-    createSnackbar(resp.message);
+    this.props.setInfoText(resp.message);
   };
 
   /**
@@ -167,12 +171,11 @@ export default class Auth extends React.Component {
   passwordResetHandler = async (event) => {
     if (event) event.preventDefault();
     const {passwordResetToken, password} = this.state;
-    const {createSnackbar, sendRequest} = this.props;
     if (!this.validatePassword()) return;
     const resp = await sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
-    if (resp.error) createSnackbar(resp.error);
-    else if (resp.msg) createSnackbar('Link invalid or expired');
-    else if (resp.message) createSnackbar(resp.message);
+    if (resp.error) this.props.setInfoText(resp.error);
+    else if (resp.msg) this.props.setInfoText('Link invalid or expired');
+    else if (resp.message) this.props.setInfoText(resp.message);
     this.clearState();
   };
 
@@ -182,12 +185,11 @@ export default class Auth extends React.Component {
    */
   reqActivationEmail = async () => {
     const {username, password} = this.state;
-    const {createSnackbar, sendRequest} = this.props;
     const resp = await sendRequest({username: username, password: password}, 'user/activate');
-    if (resp.error) createSnackbar(resp.error);
+    if (resp.error) this.props.setInfoText(resp.error);
     else if (resp.message === 'Bad credentials') {
       this.clearState();
-      return createSnackbar(resp.message);
+      this.props.setInfoText(resp.message);
     }
   };
 
@@ -198,11 +200,10 @@ export default class Auth extends React.Component {
   reqPasswordReset = async (event) => {
     if (event) event.preventDefault();
     const {username} = this.state;
-    const {createSnackbar, sendRequest} = this.props;
-    if (!username) return createSnackbar('Please enter your email');
+    if (!username) return this.props.setInfoText('Please enter your email');
     const resp = await sendRequest({username: username}, 'user/reset_password');
-    if (resp.error) createSnackbar(resp.error);
-    else createSnackbar('Sending email...');
+    if (resp.error) this.props.setInfoText(resp.error);
+    else this.props.setInfoText('Sending email...');
     this.clearState();
   };
 
@@ -271,3 +272,8 @@ export default class Auth extends React.Component {
     );
   }
 }
+
+const mapStateToProps = state => ({ tokens: state.tokens });
+
+const ConnectedAuth = connect(mapStateToProps, {setAccessToken, setInfoText, setRefreshToken})(Auth);
+export default ConnectedAuth

@@ -5,11 +5,14 @@ import Paper from '@material-ui/core/Paper';
 
 import Button from './submitButton';
 import LanguageSelector from './languageSelector';
+import sendRequest from '../../scripts/sendRequest';
 import TextInput from './textInput';
 import TextDisplay from './textDisplay';
+import connect from "react-redux/es/connect/connect";
+import { setInfoText } from "../../actions";
 
 
-export default class Translate extends React.Component {
+class Translate extends React.Component {
   state = {
     inputText: '',
     translatedText: '',
@@ -27,13 +30,39 @@ export default class Translate extends React.Component {
   };
 
   /**
+   * @param sourceLang abbreviation of a language's name.  e.g., `en` for English
+   * @param targetLang abbreviation of a language's name.  e.g., `en` for English
+   * @param text Text to translate
+   * @return {Promise<*>}
+   */
+  sendTranslateRequest = async (sourceLang, targetLang, text) => {
+    const accessToken = this.props.tokens.accessToken;
+    const headers = {'Authorization': `Bearer ${accessToken}`};
+    const body = {text: text, to: targetLang, from: sourceLang};
+    const resp = await sendRequest(body, 'translate', headers);
+    // resp.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
+    if (resp.msg) {
+      const refreshSuccessful = await this.props.refreshAccessToken();
+      if (refreshSuccessful) {
+        return this.sendTranslateRequest(sourceLang, targetLang, text);
+      }
+      // resp.error means there something went wrong with the request to Azure's translate API
+    } else if (resp.error) {
+      this.props.setInfoText('Something went wrong, please try again later.')
+    } else if (resp[0]){
+      return resp[0];
+    }
+  };
+
+
+  /**
    * @param event
    * @return {Promise<void>}
    */
   onSubmit = async (event) => {
     event.preventDefault();
     const {inputText, sourceLang, targetLang} = this.state;
-    const resp = await this.props.sendReq(sourceLang, targetLang, inputText);
+    const resp = await this.sendTranslateRequest(sourceLang, targetLang, inputText);
     if (!resp) return;
     const trans = resp.translations;
     const text = trans[0].text;
@@ -116,3 +145,7 @@ export default class Translate extends React.Component {
     )
   }
 }
+const mapStateToProps = state => ({ tokens: state.tokens });
+
+const ConnectedTranslate = connect(mapStateToProps, { setInfoText })(Translate);
+export default ConnectedTranslate
