@@ -9,12 +9,12 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import { connect } from 'react-redux';
 
 import AboutModal from './about';
 import DeleteAccount from '../auth/deleteAccount';
 import sendRequest from '../../scripts/sendRequest';
 import TitleBar from "./titleBar";
-import connect from "react-redux/es/connect/connect";
 import { setInfoText } from "../../actions";
 
 

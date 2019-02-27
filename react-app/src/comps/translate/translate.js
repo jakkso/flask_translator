@@ -2,13 +2,13 @@ import React from 'react'
 
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
+import { connect } from 'react-redux';
 
 import Button from './submitButton';
 import LanguageSelector from './languageSelector';
 import sendRequest from '../../scripts/sendRequest';
 import TextInput from './textInput';
 import TextDisplay from './textDisplay';
-import connect from "react-redux/es/connect/connect";
 import { setInfoText } from "../../actions";
 
 

@@ -5,3 +5,6 @@ notes.txt
 ## Env files ##
 .env
 flask.env
+
+### Start Script ###
+dev-start.sh

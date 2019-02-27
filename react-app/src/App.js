@@ -1,5 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
 
 import Auth from './comps/auth/auth';
 import Bubble from './comps/notification/notification';
@@ -7,7 +9,9 @@ import MainMenu from './comps/menus/mainMenu';
 import sendRequest from './scripts/sendRequest';
 import { setAccessToken, setInfoText, setRefreshToken } from "./actions";
 import Translate from './comps/translate/translate';
+import rootReducer from './reducers';
 
+export const store = createStore(rootReducer);
 
 
 class MainView extends React.Component {
@@ -67,7 +71,14 @@ class MainView extends React.Component {
   }
 }
 
-const mapStateToProps = state => ({ tokens: state.tokens  });
+const providerWrapper = () => {
+  const mapStateToProps = state => ({ tokens: state.tokens  });
+  const App = connect(mapStateToProps, {setAccessToken, setInfoText, setRefreshToken})(MainView);
+  return (
+    <Provider store={store}>
+      <App />
+    </Provider>
+  )
+};
 
-const ConnectedMainView = connect(mapStateToProps, {setAccessToken, setInfoText, setRefreshToken})(MainView);
-export default ConnectedMainView
+export default providerWrapper;
