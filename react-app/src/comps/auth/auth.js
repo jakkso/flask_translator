@@ -5,7 +5,7 @@ import Login from "./login";
 import NewPassword from "./newPassword";
 import Register from "./registration";
 import ResetPassword from "./resetPasswordRequest";
-import sendRequest from "../../scripts/sendRequest";
+import Request from "../../scripts/sendRequest";
 import Unactivated from "./unactivated";
 import { setAccessToken, setInfoText, setRefreshToken } from "../../actions";
 
@@ -73,7 +73,7 @@ export class Auth extends React.Component {
    * @return {Promise<void>}
    */
   activationHandler = async token => {
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       {},
       "user/activate",
       { Authorization: `Bearer ${token}` },
@@ -132,7 +132,7 @@ export class Auth extends React.Component {
       this.props.setInfoText("Username and password required");
       return;
     }
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { username: username, password: password },
       "user/login"
     );
@@ -146,6 +146,7 @@ export class Auth extends React.Component {
         case "Unverified email address":
           return this.setState({ unactivated: true });
         case `Logged in as ${username}`:
+          this.props.setInfoText(resp.message);
           this.props.setAccessToken(resp.access_token);
           this.props.setRefreshToken(resp.refresh_token);
           break;
@@ -164,7 +165,7 @@ export class Auth extends React.Component {
     if (event) event.preventDefault();
     if (!this.validateUsername() || !this.validatePassword()) return;
     const { username, password } = this.state;
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { username: username, password: password },
       "user/registration"
     );
@@ -185,7 +186,7 @@ export class Auth extends React.Component {
     if (event) event.preventDefault();
     const { passwordResetToken, password } = this.state;
     if (!this.validatePassword()) return;
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { password: password },
       "user/reset_password",
       { Authorization: `Bearer ${passwordResetToken}` },
@@ -203,15 +204,15 @@ export class Auth extends React.Component {
    */
   reqActivationEmail = async () => {
     const { username, password } = this.state;
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { username: username, password: password },
       "user/activate"
     );
-    if (resp.error) this.props.setInfoText(resp.error);
+    if (resp.error) return this.props.setInfoText(resp.error);
     else if (resp.message === "Bad credentials") {
       this.clearState();
-      this.props.setInfoText(resp.message);
     }
+    this.props.setInfoText(resp.message);
   };
 
   /**
@@ -222,7 +223,7 @@ export class Auth extends React.Component {
     if (event) event.preventDefault();
     const { username } = this.state;
     if (!username) return this.props.setInfoText("Please enter your email");
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { username: username },
       "user/reset_password"
     );

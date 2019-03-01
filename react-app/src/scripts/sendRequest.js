@@ -10,29 +10,29 @@ const handleErrors = response => {
   }
 };
 
-const sendRequest = async (
-  body,
-  endpoint,
-  additionalHeaders = {},
-  method = "POST"
-) => {
-  const url = baseUrl + endpoint;
-  const headers = {
-    ...{ "Content-Type": "application/json" },
-    ...additionalHeaders
-  };
-  const options = {
-    method: method,
-    mode: "cors",
-    headers: headers,
-    body: JSON.stringify(body)
-  };
-  try {
-    const resp = handleErrors(await fetch(url, options));
-    return await resp.json();
-  } catch (e) {
-    return { error: "Something went wrong, try again later." };
+export default class Request {
+  static async sendRequest(
+    body,
+    endpoint,
+    additionalHeaders = {},
+    method = "POST"
+  ) {
+    const url = baseUrl + endpoint;
+    const headers = {
+      ...{ "Content-Type": "application/json" },
+      ...additionalHeaders
+    };
+    const options = {
+      method: method,
+      mode: "cors",
+      headers: headers,
+      body: JSON.stringify(body)
+    };
+    try {
+      const resp = handleErrors(await fetch(url, options));
+      return await resp.json();
+    } catch (e) {
+      return { error: "Something went wrong, try again later." };
+    }
   }
-};
-
-export default sendRequest;
+}

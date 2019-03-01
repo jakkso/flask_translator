@@ -12,7 +12,7 @@ import { connect } from "react-redux";
 
 import { styles } from "../styles/styles";
 import { setInfoText } from "../../actions";
-import sendRequest from "../../scripts/sendRequest";
+import Request from "../../scripts/sendRequest";
 
 export class DeleteAccount extends React.Component {
   state = {
@@ -38,7 +38,7 @@ export class DeleteAccount extends React.Component {
     const headers = {
       Authorization: `Bearer ${this.props.tokens.accessToken}`
     };
-    const resp = await sendRequest(
+    const resp = await Request.sendRequest(
       { password: password },
       "user/delete",
       headers,

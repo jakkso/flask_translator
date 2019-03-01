@@ -6,7 +6,7 @@ import { connect } from "react-redux";
 
 import Button from "./submitButton";
 import LanguageSelector from "./languageSelector";
-import sendRequest from "../../scripts/sendRequest";
+import Request from "../../scripts/sendRequest";
 import TextInput from "./textInput";
 import TextDisplay from "./textDisplay";
 import { setInfoText } from "../../actions";
@@ -38,7 +38,7 @@ class Translate extends React.Component {
     const accessToken = this.props.tokens.accessToken;
     const headers = { Authorization: `Bearer ${accessToken}` };
     const body = { text: text, to: targetLang, from: sourceLang };
-    const resp = await sendRequest(body, "translate", headers);
+    const resp = await Request.sendRequest(body, "translate", headers);
     // resp.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
     if (resp.msg) {
       const refreshSuccessful = await this.props.refreshAccessToken();

@@ -6,7 +6,7 @@ import { createStore } from "redux";
 import Auth from "./comps/auth/auth";
 import Bubble from "./comps/notification/notification";
 import MainMenu from "./comps/menus/mainMenu";
-import sendRequest from "./scripts/sendRequest";
+import Request from "./scripts/sendRequest";
 import { setAccessToken, setInfoText, setRefreshToken } from "./actions";
 import Translate from "./comps/translate/translate";
 import rootReducer from "./reducers";
@@ -21,7 +21,7 @@ class MainView extends React.Component {
    */
   refreshAccessToken = async () => {
     const { refreshToken } = this.props.tokens;
-    const resp = await sendRequest({}, "token/refresh", {
+    const resp = await Request.sendRequest({}, "token/refresh", {
       Authorization: `Bearer ${refreshToken}`
     });
     if (resp.error) {
@@ -47,9 +47,9 @@ class MainView extends React.Component {
     this.props.setAccessToken(null);
     this.props.setRefreshToken(null);
     const headers = { Authorization: `Bearer ${accessToken}` };
-    await sendRequest({}, "logout/access", headers);
+    await Request.sendRequest({}, "logout/access", headers);
     headers["Authorization"] = `Bearer ${refreshToken}`;
-    await sendRequest({}, "logout/refresh", headers);
+    await Request.sendRequest({}, "logout/refresh", headers);
   };
 
   render() {
