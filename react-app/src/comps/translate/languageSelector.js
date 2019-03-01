@@ -7,43 +7,43 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 
 export const styles = theme => ({
-    root: {
-        display: "flex",
-        flexWrap: "wrap"
-    },
-    formControl: {
-        margin: theme.spacing.unit,
-        minWidth: 150
-    },
-    selectEmpty: {
-        marginTop: theme.spacing.unit * 2
-    }
+  root: {
+    display: "flex",
+    flexWrap: "wrap"
+  },
+  formControl: {
+    margin: theme.spacing.unit,
+    minWidth: 150
+  },
+  selectEmpty: {
+    marginTop: theme.spacing.unit * 2
+  }
 });
 
 export function LanguageSelector(props) {
-    const { classes, langs, excluded, onChange, id, selected, label } = props;
-    const availableLanguages = langs
-        .filter(lang => {
-            return lang[0] !== excluded;
-        })
-        .map(lang => {
-            const [shortName, langObj] = lang;
-            return (
-                <MenuItem value={shortName} key={shortName}>
-                    {langObj.name}
-                </MenuItem>
-            );
-        });
-    return (
-        <form className={classes.root}>
-            <FormControl className={classes.formControl}>
-                <InputLabel htmlFor={id}>{label}</InputLabel>
-                <Select value={selected} onChange={onChange} id={id} name={id}>
-                    {availableLanguages}
-                </Select>
-            </FormControl>
-        </form>
-    );
+  const { classes, langs, excluded, onChange, id, selected, label } = props;
+  const availableLanguages = langs
+    .filter(lang => {
+      return lang[0] !== excluded;
+    })
+    .map(lang => {
+      const [shortName, langObj] = lang;
+      return (
+        <MenuItem value={shortName} key={shortName}>
+          {langObj.name}
+        </MenuItem>
+      );
+    });
+  return (
+    <form className={classes.root}>
+      <FormControl className={classes.formControl}>
+        <InputLabel htmlFor={id}>{label}</InputLabel>
+        <Select value={selected} onChange={onChange} id={id} name={id}>
+          {availableLanguages}
+        </Select>
+      </FormControl>
+    </form>
+  );
 }
 
 export default withStyles(styles)(LanguageSelector);
