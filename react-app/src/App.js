@@ -13,7 +13,7 @@ import rootReducer from "./reducers";
 
 export const store = createStore(rootReducer);
 
-class MainView extends React.Component {
+export class MainView extends React.Component {
   /**
    * Access tokens expire after 15 min, this method retrieves a new one using refresh
    * token.  If the refresh attempt fails, log out user
@@ -25,14 +25,14 @@ class MainView extends React.Component {
       Authorization: `Bearer ${refreshToken}`
     });
     if (resp.error) {
-      this.this.props.setInfoText(resp.error);
+      this.props.setInfoText(resp.error);
       return false;
     } else if (resp.access_token) {
       this.props.setAccessToken(resp.access_token);
       return true;
     } else {
       await this.logout();
-      this.this.props.setInfoText("Please log in again.");
+      this.props.setInfoText("Please log in again.");
       return false;
     }
   };

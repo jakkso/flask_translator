@@ -11,7 +11,7 @@ import TextInput from "./textInput";
 import TextDisplay from "./textDisplay";
 import { setInfoText } from "../../actions";
 
-class Translate extends React.Component {
+export class Translate extends React.Component {
   state = {
     inputText: "",
     translatedText: "",
@@ -35,6 +35,11 @@ class Translate extends React.Component {
    * @return {Promise<*>}
    */
   sendTranslateRequest = async (sourceLang, targetLang, text) => {
+    const { langs } = this.state;
+    if (!langs) {
+      this.props.setInfoText("Something went wrong, please try again later.");
+      return;
+    }
     const accessToken = this.props.tokens.accessToken;
     const headers = { Authorization: `Bearer ${accessToken}` };
     const body = { text: text, to: targetLang, from: sourceLang };
@@ -50,6 +55,8 @@ class Translate extends React.Component {
       this.props.setInfoText("Something went wrong, please try again later.");
     } else if (resp[0]) {
       return resp[0];
+    } else {
+      this.props.setInfoText("Something went wrong, please try again later.");
     }
   };
 
@@ -58,7 +65,7 @@ class Translate extends React.Component {
    * @return {Promise<void>}
    */
   onSubmit = async event => {
-    event.preventDefault();
+    if (event) event.preventDefault();
     const { inputText, sourceLang, targetLang } = this.state;
     const resp = await this.sendTranslateRequest(
       sourceLang,
@@ -69,6 +76,7 @@ class Translate extends React.Component {
     const trans = resp.translations;
     const text = trans[0].text;
     this.setState({ translatedText: text, inputText: "" });
+    return "help";
   };
 
   /**
