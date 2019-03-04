@@ -21,20 +21,14 @@ export class MainView extends React.Component {
    */
   refreshAccessToken = async () => {
     const { refreshToken } = this.props.tokens;
-    const resp = await Request.sendRequest({}, "token/refresh", {
-      Authorization: `Bearer ${refreshToken}`
-    });
-    if (resp.error) {
-      this.props.setInfoText(resp.error);
-      return false;
-    } else if (resp.access_token) {
-      this.props.setAccessToken(resp.access_token);
-      return true;
+    const resp = await Request.refreshAccessToken(refreshToken);
+    if (resp.accessToken) {
+      this.props.setAccessToken(resp.accessToken);
     } else {
       await this.logout();
       this.props.setInfoText("Please log in again.");
-      return false;
     }
+    return resp.success;
   };
 
   /**
@@ -46,10 +40,7 @@ export class MainView extends React.Component {
     const { accessToken, refreshToken } = this.props.tokens;
     this.props.setAccessToken(null);
     this.props.setRefreshToken(null);
-    const headers = { Authorization: `Bearer ${accessToken}` };
-    await Request.sendRequest({}, "logout/access", headers);
-    headers["Authorization"] = `Bearer ${refreshToken}`;
-    await Request.sendRequest({}, "logout/refresh", headers);
+    await Request.logout(accessToken, refreshToken);
   };
 
   render() {

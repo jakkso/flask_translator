@@ -11,6 +11,8 @@ import TextInput from "./textInput";
 import TextDisplay from "./textDisplay";
 import { setInfoText } from "../../actions";
 
+const DEFAULT_ERR_MSG = 'Something went wrong, please try again later.';
+
 export class Translate extends React.Component {
   state = {
     inputText: "",
@@ -29,54 +31,37 @@ export class Translate extends React.Component {
   };
 
   /**
-   * @param sourceLang abbreviation of a language's name.  e.g., `en` for English
-   * @param targetLang abbreviation of a language's name.  e.g., `en` for English
-   * @param text Text to translate
-   * @return {Promise<*>}
-   */
-  sendTranslateRequest = async (sourceLang, targetLang, text) => {
-    const { langs } = this.state;
-    if (!langs) {
-      this.props.setInfoText("Something went wrong, please try again later.");
-      return;
-    }
-    const accessToken = this.props.tokens.accessToken;
-    const headers = { Authorization: `Bearer ${accessToken}` };
-    const body = { text: text, to: targetLang, from: sourceLang };
-    const resp = await Request.sendRequest(body, "translate", headers);
-    // resp.msg indicates that something went wrong, i.e., the access token is missing, invalid or expired
-    if (resp.msg) {
-      const refreshSuccessful = await this.props.refreshAccessToken();
-      if (refreshSuccessful) {
-        return this.sendTranslateRequest(sourceLang, targetLang, text);
-      }
-      // resp.error means there something went wrong with the request to Azure's translate API
-    } else if (resp.error) {
-      this.props.setInfoText("Something went wrong, please try again later.");
-    } else if (resp[0]) {
-      return resp[0];
-    } else {
-      this.props.setInfoText("Something went wrong, please try again later.");
-    }
-  };
-
-  /**
+   *
    * @param event
    * @return {Promise<void>}
    */
   onSubmit = async event => {
     if (event) event.preventDefault();
-    const { inputText, sourceLang, targetLang } = this.state;
-    const resp = await this.sendTranslateRequest(
-      sourceLang,
-      targetLang,
-      inputText
-    );
-    if (!resp) return;
-    const trans = resp.translations;
-    const text = trans[0].text;
-    this.setState({ translatedText: text, inputText: "" });
-    return "help";
+    const { inputText, sourceLang, targetLang, langs } = this.state;
+    if (!langs) return this.props.setInfoText(DEFAULT_ERR_MSG);
+    const response = await Request.translation(sourceLang, targetLang, inputText, this.props.tokens.accessToken);
+    if (response.success) this.setState({ translatedText: response.message, inputText: "" });
+    else {
+      if (response.message === 'Internal server error') {
+        this.props.setInfoText(DEFAULT_ERR_MSG);
+      } else if (response.message === 'Invalid token') {
+        const success = await this.props.refreshAccessToken();
+        if (success) return this.onSubmit();
+      }
+    }
+  };
+
+  /**
+   * Watch for Return key-presses.
+   * Prevents addition of newline character to the input box, as well
+   * as the page refresh, instead calling submit
+   * @param event
+   */
+  onKeyDown = event => {
+    if (event.keyCode === 13 || event.which === 13) {
+      event.preventDefault();
+      return this.onSubmit();
+    }
   };
 
   /**
@@ -145,6 +130,7 @@ export class Translate extends React.Component {
                   inputText={inputText}
                   onChange={this.onChange}
                   onSubmit={this.onSubmit}
+                  onKeyDown={this.onKeyDown}
                 />
               </form>
               <Button onClick={this.onSubmit} buttonText="Translate" />

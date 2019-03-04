@@ -43,8 +43,8 @@ describe("Translate Component", () => {
     expect(wrapper.state().inputText).toEqual("hello");
   });
 
-  it("sendTranslateRequest should work as expected", async () => {
-    const stub = sinon.stub(Request, "sendRequest").returns({});
+  it("onSubmit should work as expected", async () => {
+    const stub = sinon.stub(Request, "translation").returns({});
     const setInfoText = jest.fn();
     const refreshAccessToken = jest.fn(() => true);
     const tokens = { refreshToken: 123, accessToken: 456 };
@@ -56,38 +56,51 @@ describe("Translate Component", () => {
       />
     );
     // If languages haven't been fetched yet, function will return early
-    await wrapper.instance().sendTranslateRequest();
+    await wrapper.instance().onSubmit();
     expect(setInfoText).toHaveBeenCalledWith(
       "Something went wrong, please try again later."
     );
-    wrapper.setState({ langs: langs });
-    const headers = { Authorization: "Bearer 456" };
-    const body = { text: "dogs are good", to: "es", from: "en" };
-    stub.withArgs(body, "translate", headers).returns({ error: "" });
+    wrapper.setState({ langs: langs, inputText: 'dogs are good', sourceLang: 'en', targetLang: 'es' });
+    stub.withArgs('en', 'es', 'dogs are good').returns({ success: false, message: "Internal server error" });
     // Simulating API error
-    await wrapper.instance().sendTranslateRequest("en", "es", "dogs are good");
+    await wrapper.instance().onSubmit();
     expect(setInfoText).toHaveBeenCalledWith(
       "Something went wrong, please try again later."
     );
     // Now for a successful translation request
-    stub.withArgs(body, "translate", headers).returns(["hello", "there"]);
-    let req = await wrapper
-      .instance()
-      .sendTranslateRequest("en", "es", "dogs are good");
-    expect(req).toEqual("hello");
-    // Now simulating expired accessToken, where refreshAccessToken must be called
-    stub.reset();
-    stub
-      .withArgs(body, "translate", headers)
-      .onFirstCall()
-      .returns({ msg: { msg: "" } })
-      .onSecondCall()
-      .returns(["there"]);
-    req = await wrapper
-      .instance()
-      .sendTranslateRequest("en", "es", "dogs are good");
+    stub.withArgs('en', 'es', 'dogs are good').returns({ success: true, message: "los perros son buenos" });
+    await wrapper.instance().onSubmit();
+    expect(wrapper.state().translatedText).toEqual("los perros son buenos");
+    expect(wrapper.state().inputText).toEqual('');
+
+    wrapper.setState({ inputText: 'dogs are friendly cats', translatedText: '' });
+    // Simulating expired accessToken, where refreshAccessToken must be called
+    stub.withArgs('en', 'es', 'dogs are friendly cats')
+      .onFirstCall().returns({ success: false, message: "Invalid token" })
+      .onSecondCall().returns({ success: true, message: "perros son buenos"});
+    await wrapper.instance().onSubmit();
     expect(refreshAccessToken).toHaveBeenCalled();
-    expect(req).toEqual("there");
+    expect(wrapper.state().translatedText).toEqual('perros son buenos');
+    expect(wrapper.state().inputText).toEqual('');
     stub.restore();
+  });
+
+  it("should handle onKeyDown correctly", async () => {
+    const setInfoText = jest.fn();
+    const preventDefault = jest.fn();
+    const event = {keyCode: 13, preventDefault: preventDefault};
+    wrapper = shallow(
+      <Translate
+        setInfoText={setInfoText}
+      />);
+    wrapper.instance().onKeyDown(event);
+    // langs are empty, therefore default error message is displayed
+    expect(setInfoText).toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
+    event.which = 13;
+    event.keyCode = null;
+    wrapper.instance().onKeyDown(event);
+    expect(setInfoText).toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
   });
 });

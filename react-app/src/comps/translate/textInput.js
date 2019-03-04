@@ -22,7 +22,7 @@ const styles = theme => ({
 });
 
 export function TextInput(props) {
-  const { classes, inputText, onChange, onSubmit } = props;
+  const { classes, inputText, onChange, onSubmit, onKeyDown } = props;
   return (
     <TextField
       name="inputText"
@@ -32,10 +32,11 @@ export function TextInput(props) {
       label="Text to translate"
       multiline
       rows="1"
-      rowsMax="3"
+      rowsMax="5"
       className={classes.textField}
       margin="normal"
       autoFocus={true}
+      onKeyDown={onKeyDown}
     />
   );
 }

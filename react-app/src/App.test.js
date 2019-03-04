@@ -38,14 +38,13 @@ describe("App Component", () => {
 
   it("refreshAccessToken behaves as expected", async () => {
     let res;
-    sinon
-      .stub(Request, "sendRequest")
+    const refreshAccessTokenStub = sinon
+      .stub(Request, "refreshAccessToken")
       .onFirstCall()
-      .returns({ error: "err" })
+      .returns({ success: false, accessToken: undefined })
       .onSecondCall()
-      .returns({ access_token: "123" })
-      .onThirdCall()
-      .returns({});
+      .returns({ success: true, accessToken: '123' });
+    const logoutStub = sinon.stub(Request, "logout");
     const setInfoText = jest.fn();
     const setAccessToken = jest.fn();
     const setRefreshToken = jest.fn();
@@ -60,23 +59,23 @@ describe("App Component", () => {
     // error is returned by API
     res = await wrapper.instance().refreshAccessToken();
     expect(res).toEqual(false);
-    expect(setInfoText).toHaveBeenCalledWith("err");
+    expect(setInfoText).toHaveBeenCalledWith("Please log in again.");
+    expect(setRefreshToken).toHaveBeenCalled();
+    expect(setAccessToken).toHaveBeenCalled();
     // access_token is returned
     res = await wrapper.instance().refreshAccessToken();
     expect(res).toEqual(true);
     expect(setAccessToken).toHaveBeenCalledWith("123");
-    // Otherwise logout the user
-    res = await wrapper.instance().refreshAccessToken();
-    expect(res).toEqual(false);
-    expect(setInfoText).toHaveBeenCalledWith("Please log in again.");
-    expect(setRefreshToken).toHaveBeenCalled();
-    expect(setAccessToken).toHaveBeenCalled();
+    expect(logoutStub.called).toEqual(true);
+    logoutStub.restore();
+    refreshAccessTokenStub.restore();
   });
 
   it("logout behaves as expected", async () => {
     const setInfoText = jest.fn();
     const setAccessToken = jest.fn();
     const setRefreshToken = jest.fn();
+    const logoutStub = sinon.stub(Request, "logout");
     wrapper = shallow(
       <MainView
         setInfoText={setInfoText}
@@ -88,5 +87,7 @@ describe("App Component", () => {
     await wrapper.instance().logout();
     expect(setAccessToken).toHaveBeenCalledWith(null);
     expect(setRefreshToken).toHaveBeenCalledWith(null);
+    expect(logoutStub.called).toEqual(true);
+    logoutStub.restore();
   });
 });
