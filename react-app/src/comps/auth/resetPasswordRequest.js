@@ -1,18 +1,17 @@
-import React from 'react';
+import React from "react";
 
-import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-import withStyles from '@material-ui/core/styles/withStyles';
+import Button from "@material-ui/core/Button";
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
+import withStyles from "@material-ui/core/styles/withStyles";
 import FormControl from "@material-ui/core/FormControl/FormControl";
 import InputLabel from "@material-ui/core/InputLabel/InputLabel";
 import Input from "@material-ui/core/Input/Input";
 
-import {styles} from '../styles/styles'
+import { styles } from "../styles/styles";
 
-
-const ResetPasswordRequest = (props) => {
-  const {username, onChange, onSubmit, logout, classes} = props;
+export const ResetPasswordRequest = props => {
+  const { username, onChange, onSubmit, logout, classes } = props;
   return (
     <main className={classes.main}>
       <Paper className={classes.paper}>
@@ -20,7 +19,8 @@ const ResetPasswordRequest = (props) => {
           Reset Password
         </Typography>
         <Typography component="p">
-          Forget your password?  Enter your email and we'll send a password reset email.
+          Forget your password? Enter your email and we'll send a password reset
+          email.
         </Typography>
         <form className={classes.form}>
           <FormControl margin="normal" required fullWidth>
@@ -58,7 +58,7 @@ const ResetPasswordRequest = (props) => {
         </form>
       </Paper>
     </main>
-  )
+  );
 };
 
-export default withStyles(styles)(ResetPasswordRequest)
+export default withStyles(styles)(ResetPasswordRequest);

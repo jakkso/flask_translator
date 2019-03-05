@@ -1,21 +1,19 @@
-import React from 'react';
+import React from "react";
 
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles from "@material-ui/core/styles/withStyles";
 
-
-import {styles} from '../styles/styles'
+import { styles } from "../styles/styles";
 import Avatar from "@material-ui/core/Avatar/Avatar";
 import Button from "@material-ui/core/Button/Button";
 import CssBaseline from "@material-ui/core/CssBaseline/CssBaseline";
 import FormControl from "@material-ui/core/FormControl/FormControl";
 import Input from "@material-ui/core/Input/Input";
 import InputLabel from "@material-ui/core/InputLabel/InputLabel";
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography/Typography";
 import Paper from "@material-ui/core/Paper/Paper";
 
-
-const Login = (props) => {
+export const Login = props => {
   const {
     username,
     password,

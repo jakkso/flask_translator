@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 
-import withStyles from '@material-ui/core/styles/withStyles';
+import withStyles from "@material-ui/core/styles/withStyles";
 
-import {styles} from '../styles/styles'
+import { styles } from "../styles/styles";
 import Modal from "@material-ui/core/Modal/Modal";
 import Typography from "@material-ui/core/Typography/Typography";
 import FormControl from "@material-ui/core/FormControl/FormControl";
@@ -10,14 +10,15 @@ import InputLabel from "@material-ui/core/InputLabel/InputLabel";
 import Input from "@material-ui/core/Input/Input";
 import Button from "@material-ui/core/Button/Button";
 
-const Register = (props) => {
-  const {username,
+export const Register = props => {
+  const {
+    username,
     password,
     password2,
     onChange,
     onSubmit,
     classes,
-    toggleModal,
+    toggleModal
   } = props;
   return (
     <Modal
@@ -31,11 +32,7 @@ const Register = (props) => {
           Register
         </Typography>
         <form>
-          <FormControl
-            margin="normal"
-            required
-            fullWidth
-          >
+          <FormControl margin="normal" required fullWidth>
             <InputLabel htmlFor="username">Email Address</InputLabel>
             <Input
               id="username"
@@ -46,11 +43,7 @@ const Register = (props) => {
               onChange={onChange}
             />
           </FormControl>
-          <FormControl
-            margin="normal"
-            required
-            fullWidth
-          >
+          <FormControl margin="normal" required fullWidth>
             <InputLabel htmlFor="password">Password</InputLabel>
             <Input
               required
@@ -61,12 +54,7 @@ const Register = (props) => {
               type="password"
             />
           </FormControl>
-          <FormControl
-            margin="normal"
-            required
-            fullWidth
-            onSubmit={onSubmit}
-          >
+          <FormControl margin="normal" required fullWidth onSubmit={onSubmit}>
             <InputLabel htmlFor="password2">Repeat Password</InputLabel>
             <Input
               required
@@ -90,7 +78,7 @@ const Register = (props) => {
         </form>
       </div>
     </Modal>
-  )
+  );
 };
 
-export default withStyles(styles)(Register)
+export default withStyles(styles)(Register);

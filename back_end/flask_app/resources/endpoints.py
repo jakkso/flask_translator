@@ -8,7 +8,7 @@ from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
     get_jwt_identity,
-    get_raw_jwt,
+    get_raw_jwt
 )
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_restful import Resource, reqparse
@@ -351,7 +351,7 @@ class Translation(Endpoint):
         response = translate(text=data["text"], src=data["from"], target=data["to"])
         if isinstance(response, list):  # Successful responses are lists of dicts
             self.logger.info(fmt("POST", user, "Successful translate req"))
-            return response, 200
+            return response[0]["translations"][0], 200
         elif response["error"]:
             self.logger.error(
                 fmt(
@@ -360,7 +360,7 @@ class Translation(Endpoint):
                     f'Failed translate request - error: {response["error"]}',
                 )
             )
-            return {"error": "Internal Service Error"}, 500
+        return {"error": "Internal server error"}, 500
 
 
 def generate_activation_url(token_name: str, token_value: str) -> str:

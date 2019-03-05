@@ -12,6 +12,8 @@ before_install:
 - sudo mv docker-compose /usr/local/bin
 before_script:
 - docker-compose -f docker-compose-dev.yml up --build -d
+- export CI=true
 script:
 - docker-compose -f docker-compose-dev.yml exec flask-api python -m pytest
+- docker-compose -f docker-compose-dev.yml exec client npm test
 after_script: docker-compose -f docker-compose-dev.yml down

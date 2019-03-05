@@ -14,6 +14,7 @@ class Config:
     TESTING_DB_URL = env.get("DATABASE_TEST_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = env.get("JWT_KEY")
+    JWT_ERROR_MESSAGE_KEY = 'error'
     JWT_BLACKLIST_ENABLED = True
     JWT_BLACKLIST_TOKEN_CHECKS = ["access", "refresh"]
     TRANSLATE_API_KEY = env.get("TEXT_TRANSLATE_KEY")

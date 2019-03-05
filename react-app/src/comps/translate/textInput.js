@@ -1,29 +1,28 @@
-import React from 'react';
+import React from "react";
 
-import { withStyles } from '@material-ui/core/styles';
-import TextField from '@material-ui/core/TextField';
-
+import { withStyles } from "@material-ui/core/styles";
+import TextField from "@material-ui/core/TextField";
 
 const styles = theme => ({
   container: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap"
   },
   textField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
-    width: 400,
+    width: 400
   },
   dense: {
-    marginTop: 19,
+    marginTop: 19
   },
   menu: {
-    width: 200,
-  },
+    width: 200
+  }
 });
 
-function TextInput(props) {
-  const { classes, inputText, onChange, onSubmit } = props;
+export function TextInput(props) {
+  const { classes, inputText, onChange, onSubmit, onKeyDown } = props;
   return (
     <TextField
       name="inputText"
@@ -33,12 +32,13 @@ function TextInput(props) {
       label="Text to translate"
       multiline
       rows="1"
-      rowsMax="3"
+      rowsMax="5"
       className={classes.textField}
       margin="normal"
       autoFocus={true}
+      onKeyDown={onKeyDown}
     />
-  )
+  );
 }
 
 export default withStyles(styles)(TextInput);

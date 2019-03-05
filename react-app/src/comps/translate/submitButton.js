@@ -1,19 +1,18 @@
-import React from 'react';
+import React from "react";
 
-import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-
+import { withStyles } from "@material-ui/core/styles";
+import Button from "@material-ui/core/Button";
 
 const styles = theme => ({
   button: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing.unit
   },
   input: {
-    display: 'none',
-  },
+    display: "none"
+  }
 });
 
-function UtilityButton(props) {
+export function UtilityButton(props) {
   const { classes, onClick, buttonText, id } = props;
   return (
     <Button
@@ -24,7 +23,7 @@ function UtilityButton(props) {
     >
       {buttonText}
     </Button>
-  )
+  );
 }
 
 export default withStyles(styles)(UtilityButton);

@@ -1,50 +1,49 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React from "react";
+import { connect } from "react-redux";
 
-import Login from './login';
-import NewPassword from './newPassword';
+import Login from "./login";
+import NewPassword from "./newPassword";
 import Register from "./registration";
-import ResetPassword from './resetPasswordRequest';
-import sendRequest from '../../scripts/sendRequest';
-import Unactivated from './unactivated';
-import {setAccessToken, setInfoText, setRefreshToken} from "../../actions";
+import ResetPassword from "./resetPasswordRequest";
+import Request from "../../scripts/sendRequest";
+import Unactivated from "./unactivated";
+import { setAccessToken, setInfoText, setRefreshToken } from "../../actions";
 
-
-class Auth extends React.Component {
+export class Auth extends React.Component {
   state = {
-    username: '',
-    password: '',
-    password2: '',
+    username: "",
+    password: "",
+    password2: "",
     registration: false,
     unactivated: false,
     resetPassword: false,
-    passwordResetToken: '',
+    passwordResetToken: ""
   };
 
   clearState = () => {
     this.setState({
-      username: '',
-      password: '',
-      password2: '',
+      username: "",
+      password: "",
+      password2: "",
       registration: false,
       unactivated: false,
       resetPassword: false,
-      passwordResetToken: '',
-    })
+      passwordResetToken: ""
+    });
   };
 
-  onChange = (event) => {
-    this.setState({ [event.target.id]: event.target.value })
+  onChange = event => {
+    this.setState({ [event.target.id]: event.target.value });
   };
 
   toggleModal = () => {
-    this.setState((prevState => {
-      return {registration: !prevState.registration,};
-    }))
+    this.setState(prevState => {
+      return { registration: !prevState.registration };
+    });
   };
 
   togglePasswordReset = () => {
-    this.setState({resetPassword: true})
+    this.setState({ resetPassword: true });
   };
 
   componentDidMount() {
@@ -58,24 +57,30 @@ class Auth extends React.Component {
   tokenParser = async () => {
     const url = new URL(window.location.href);
     const params = url.searchParams;
-    const activationToken = params.get('activate');
-    const passwordResetToken = params.get('reset_password');
+    const activationToken = params.get("activate");
+    const passwordResetToken = params.get("reset_password");
     if (activationToken) this.activationHandler(activationToken);
-    if (passwordResetToken) this.setState({passwordResetToken});
-    if (activationToken || passwordResetToken) { // Remove token from URL
+    if (passwordResetToken) this.setState({ passwordResetToken });
+    if (activationToken || passwordResetToken) {
+      // Remove token from URL
       window.history.pushState(null, "", window.location.href.split("?")[0]);
     }
-   };
+  };
 
   /**
    * Called by tokenParser, handles activation API calls
    * @param token
    * @return {Promise<void>}
    */
-  activationHandler = async (token) => {
-    const resp = await sendRequest({}, 'user/activate', {'Authorization': `Bearer ${token}`}, 'PUT');
+  activationHandler = async token => {
+    const resp = await Request.sendRequest(
+      {},
+      "user/activate",
+      { Authorization: `Bearer ${token}` },
+      "PUT"
+    );
     if (resp.error) this.props.setInfoText(resp.error);
-    else if (resp.msg) this.props.setInfoText('Link invalid or expired');
+    else if (resp.msg) this.props.setInfoText("Link invalid or expired");
     else if (resp.message) this.props.setInfoText(resp.message);
     this.clearState();
   };
@@ -87,10 +92,10 @@ class Auth extends React.Component {
    * @return {boolean}
    */
   validateUsername() {
-    const {username} = this.state;
+    const { username } = this.state;
     const re = /[^@]+@[^@]+\.[^@]+/;
     if (!re.test(username)) {
-      this.props.setInfoText('Invalid email address');
+      this.props.setInfoText("Invalid email address");
       return false;
     }
     return true;
@@ -101,13 +106,15 @@ class Auth extends React.Component {
    * @return {boolean}
    */
   validatePassword() {
-    const {password, password2} = this.state;
+    const { password, password2 } = this.state;
     const re = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{14,}$/;
     if (!re.test(password)) {
-      this.props.setInfoText('Passwords must be at least 14 characters and have a letter and number');
+      this.props.setInfoText(
+        "Passwords must be at least 14 characters and have a letter and number"
+      );
       return false;
     } else if (password !== password2) {
-      this.props.setInfoText('Passwords do not match');
+      this.props.setInfoText("Passwords do not match");
       return false;
     }
     return true;
@@ -118,24 +125,28 @@ class Auth extends React.Component {
    * @param event
    * @return {Promise<*>}
    */
-  loginHandler = async (event) => {
+  loginHandler = async event => {
     if (event) event.preventDefault();
-    const {username, password} = this.state;
+    const { username, password } = this.state;
     if (!username || !password) {
-      this.props.setInfoText('Username and password required');
+      this.props.setInfoText("Username and password required");
       return;
     }
-    const resp = await sendRequest({username: username, password: password}, 'user/login');
-    if (resp.error){
+    const resp = await Request.sendRequest(
+      { username: username, password: password },
+      "user/login"
+    );
+    if (resp.error) {
       this.props.setInfoText(resp.error);
     } else {
       switch (resp.message) {
-        case 'Bad credentials':
-          this.props.setInfoText('Bad username or password');
+        case "Bad credentials":
+          this.props.setInfoText("Bad username or password");
           break;
-        case 'Unverified email address':
-          return this.setState({unactivated: true});
+        case "Unverified email address":
+          return this.setState({ unactivated: true });
         case `Logged in as ${username}`:
+          this.props.setInfoText(resp.message);
           this.props.setAccessToken(resp.access_token);
           this.props.setRefreshToken(resp.refresh_token);
           break;
@@ -150,16 +161,19 @@ class Auth extends React.Component {
    * @param event
    * @return {Promise<*>}
    */
-  registrationHandler = async (event) => {
+  registrationHandler = async event => {
     if (event) event.preventDefault();
     if (!this.validateUsername() || !this.validatePassword()) return;
-    const {username, password} = this.state;
-    const resp = await sendRequest({username: username, password: password}, 'user/registration');
+    const { username, password } = this.state;
+    const resp = await Request.sendRequest(
+      { username: username, password: password },
+      "user/registration"
+    );
     if (resp.error) {
       this.props.setInfoText(resp.error);
       this.clearState();
-    } else if (resp.message === `User ${username} was created`){
-      this.setState({unactivated: true});
+    } else if (resp.message === `User ${username} was created`) {
+      this.setState({ unactivated: true });
     }
     this.props.setInfoText(resp.message);
   };
@@ -168,13 +182,18 @@ class Auth extends React.Component {
    * Submits password reset requests
    * @return {Promise<void>}
    */
-  passwordResetHandler = async (event) => {
+  passwordResetHandler = async event => {
     if (event) event.preventDefault();
-    const {passwordResetToken, password} = this.state;
+    const { passwordResetToken, password } = this.state;
     if (!this.validatePassword()) return;
-    const resp = await sendRequest({password: password}, 'user/reset_password', {'Authorization': `Bearer ${passwordResetToken}`}, 'PUT');
+    const resp = await Request.sendRequest(
+      { password: password },
+      "user/reset_password",
+      { Authorization: `Bearer ${passwordResetToken}` },
+      "PUT"
+    );
     if (resp.error) this.props.setInfoText(resp.error);
-    else if (resp.msg) this.props.setInfoText('Link invalid or expired');
+    else if (resp.msg) this.props.setInfoText("Link invalid or expired");
     else if (resp.message) this.props.setInfoText(resp.message);
     this.clearState();
   };
@@ -184,26 +203,32 @@ class Auth extends React.Component {
    * @return {Promise<*>}
    */
   reqActivationEmail = async () => {
-    const {username, password} = this.state;
-    const resp = await sendRequest({username: username, password: password}, 'user/activate');
-    if (resp.error) this.props.setInfoText(resp.error);
-    else if (resp.message === 'Bad credentials') {
+    const { username, password } = this.state;
+    const resp = await Request.sendRequest(
+      { username: username, password: password },
+      "user/activate"
+    );
+    if (resp.error) return this.props.setInfoText(resp.error);
+    else if (resp.message === "Bad credentials") {
       this.clearState();
-      this.props.setInfoText(resp.message);
     }
+    this.props.setInfoText(resp.message);
   };
 
   /**
    * Requests password reset email to be sent to username
    * @return {Promise<*>}
    */
-  reqPasswordReset = async (event) => {
+  reqPasswordReset = async event => {
     if (event) event.preventDefault();
-    const {username} = this.state;
-    if (!username) return this.props.setInfoText('Please enter your email');
-    const resp = await sendRequest({username: username}, 'user/reset_password');
+    const { username } = this.state;
+    if (!username) return this.props.setInfoText("Please enter your email");
+    const resp = await Request.sendRequest(
+      { username: username },
+      "user/reset_password"
+    );
     if (resp.error) this.props.setInfoText(resp.error);
-    else this.props.setInfoText('Sending email...');
+    else this.props.setInfoText("Sending email...");
     this.clearState();
   };
 
@@ -225,7 +250,7 @@ class Auth extends React.Component {
           sendReq={this.reqActivationEmail}
           logout={this.clearState}
         />
-      )
+      );
     } else if (resetPassword) {
       displayItem = (
         <ResetPassword
@@ -234,7 +259,7 @@ class Auth extends React.Component {
           logout={this.clearState}
           onSubmit={this.reqPasswordReset}
         />
-      )
+      );
     } else if (passwordResetToken) {
       displayItem = (
         <NewPassword
@@ -244,16 +269,17 @@ class Auth extends React.Component {
           onSubmit={this.passwordResetHandler}
           logout={this.clearState}
         />
-      )
+      );
     } else {
-      const registerModal = registration ?
+      const registerModal = registration ? (
         <Register
           password={password}
           password2={password2}
           onChange={this.onChange}
           onSubmit={this.registrationHandler}
           toggleModal={this.toggleModal}
-        />: null;
+        />
+      ) : null;
       displayItem = (
         <Login
           username={username}
@@ -265,15 +291,16 @@ class Auth extends React.Component {
         >
           {registerModal}
         </Login>
-      )
+      );
     }
-    return (
-      displayItem
-    );
+    return displayItem;
   }
 }
 
 const mapStateToProps = state => ({ tokens: state.tokens });
 
-const ConnectedAuth = connect(mapStateToProps, {setAccessToken, setInfoText, setRefreshToken})(Auth);
-export default ConnectedAuth
+const ConnectedAuth = connect(
+  mapStateToProps,
+  { setAccessToken, setInfoText, setRefreshToken }
+)(Auth);
+export default ConnectedAuth;

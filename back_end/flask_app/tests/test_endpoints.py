@@ -4,11 +4,14 @@ Contain tests for API endpoints
 `app` is a pytest fixture so that each test is repeated with its own flask app
 """
 import json
+import sys
+from unittest.mock import patch
 
 from flask_jwt_extended import create_access_token
 
 from flask_app.tests import app
 from flask_app.resources.endpoints import generate_activation_url
+from flask_app.resources.translate import translate
 from settings import Config
 
 
@@ -95,17 +98,17 @@ def test_activate_put(app) -> None:
     resp = client().put("/api/user/activate", headers={"Authorization": ""})
     assert 401 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
-    assert "Missing Authorization Header" == body["msg"]
+    assert "Missing Authorization Header" == body["error"]
     resp = client().put(
         "/api/user/activate", headers={"Authorization": f"Bearer {token_2}"}
     )
     assert 401 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
-    assert "Token has been revoked" == body["msg"]
+    assert "Token has been revoked" == body["error"]
     resp = client().put("/api/user/activate", headers={"Authorization": f"{token_2}"})
     assert 422 == resp.status_code
     body = json.loads(resp.data.decode("utf-8"))
-    assert "Bad Authorization header. Expected value 'Bearer <JWT>'" == body["msg"]
+    assert "Bad Authorization header. Expected value 'Bearer <JWT>'" == body["error"]
     # Unregistered email
     resp = client().put(
         "/api/user/activate", headers={"Authorization": f"Bearer {bad_email}"}
@@ -323,7 +326,7 @@ def test_reset_password(app) -> None:
     )
     assert resp.status_code == 401
     body = json.loads(resp.data.decode("utf-8"))
-    assert body["msg"] == "Token has been revoked"
+    assert body["error"] == "Token has been revoked"
 
 
 def test_delete_account(app) -> None:
@@ -369,3 +372,32 @@ def test_generate_url() -> None:
     token = "123456"
     url = generate_activation_url("token", token)
     assert Config.FRONT_END_URL + "?" + f"token={token}" == url
+
+
+def test_send_translate_request(app) -> None:
+    """
+
+    :param app:
+    :return:
+    """
+    name = 'flask_app.resources.translate.translate'
+    data = {"username": "bob@bob.com", "password": "hunter2hunter222"}
+    client = app.test_client
+    client().post(
+        "/api/user/registration",
+        data=data,
+    )
+    with app.app_context():
+        token = create_access_token("bob@bob.com")
+    client().put("/api/user/activate", headers={"Authorization": f"Bearer {token}"})
+    success = client().post("/api/user/login", data=data)
+    body = json.loads(success.data.decode("utf-8"))
+    access_token = body['access_token']
+    mocked_resp = {'translations': [{'text': 'los perros son divertidos', 'to': 'es'}]}
+    failed_resp = {'error': {'code': 400035, 'message': 'The source language is not valid.'}}
+    with patch(name, return_value=mocked_resp):
+        success = client().post("/api/translate", headers={"Authorization": f'Bearer {access_token}'})
+    assert mocked_resp, 200 == success
+    with patch(name, return_value=failed_resp):
+        failure = client().post("/api/translate", headers={"Authorization": f'Bearer {access_token}'})
+    assert {"error": "Internal server error"}, 500 == failure
