@@ -8,3 +8,5 @@ flask.env
 
 ### Start Script ###
 dev-start.sh
+
+coverage/

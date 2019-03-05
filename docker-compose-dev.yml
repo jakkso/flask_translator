@@ -21,8 +21,8 @@ services:
     ports:
       - 5000:5000
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/dev
-      - DATABASE_TEST_URL=postgres://postgres:postgres@db:5432/test
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/dev
+      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/test
     depends_on:
       - db
     env_file:
