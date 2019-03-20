@@ -6,7 +6,10 @@ notes.txt
 .env
 flask.env
 
-### Start Script ###
+### Start Scripts ###
 dev-start.sh
+prod-start.sh
 
+# Testing and deployment
 coverage/
+certbot/
