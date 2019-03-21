@@ -1,0 +1,9 @@
+node_modules/
+.idea
+coverage
+build
+env
+htmlcov
+.dockerignore
+Dockerfile-dev
+Dockerfile-prod

@@ -43,7 +43,7 @@ def create_app(test_config=None) -> Flask:
         db.create_all()
     default_handler.setFormatter(formatter)  # logging formatter
     api = Api(app)
-    CORS(app)
+    CORS(app, origins=[Config.FRONT_END_URL])
     jwt.init_app(app)
     mail.init_app(app)
     Migrate(app, db)
