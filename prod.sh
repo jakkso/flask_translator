@@ -32,9 +32,11 @@ else
     echo "======================================================================="
     echo "build             Build production webapp containers."
     echo "certbot           Run script to generate SSL certificates for webapp."
+    echo "                  Run this prior to attempting to start app for the "
+    echo "                  first time, as nginx will fail to launch with"
+    echo "                  missing SSL certs.  Requires sudo usage."
     echo "down              Stop webapp."
     echo "test              Build, test, then bring down webapp."
     echo "up                Attempt to start webapp."
     echo "up detached       Attempt to start webapp, as a detached process."
 fi
-
