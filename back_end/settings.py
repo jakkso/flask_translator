@@ -24,6 +24,7 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
     MAIL_DEFAULT_SENDER = env.get("MAIL_DEFAULT_SENDER")
+    MAIL_USERNAME = env.get("MAIL_DEFAULT_SENDER")
     MAIL_PASSWORD = env.get("MAIL_PASSWORD")
     MAIL_SERVER = env.get("MAIL_SERVER")
     MAIL_PORT = env.get("MAIL_PORT")
