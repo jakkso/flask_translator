@@ -13,6 +13,7 @@ before_install:
 before_script:
 - docker-compose -f docker-compose-dev.yml up --build -d
 - export CI=true
+- export REACT_APP_API_URL=http://localhost/api/
 script:
 - docker-compose -f docker-compose-dev.yml exec flask-api python -m pytest
 - docker-compose -f docker-compose-dev.yml exec client npm test
