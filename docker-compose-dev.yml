@@ -2,7 +2,7 @@ version: '3'
 services:
   db:
     build:
-      context: back_end/db
+      context: services/db
       dockerfile: Dockerfile-dev
     ports:
      - 5435:5432
@@ -14,7 +14,7 @@ services:
 
   flask-api:
     build:
-      context: back_end/
+      context: services/db
       dockerfile: Dockerfile-dev
     ports:
       - 5000:5000
@@ -28,7 +28,7 @@ services:
 
   client:
     build:
-      context: ./react-app/
+      context: services/client
       dockerfile: Dockerfile-dev
       args:
         - NODE_ENV=development
@@ -42,8 +42,8 @@ services:
   certbot:
     image: certbot/certbot
     volumes:
-    - ./certbot/conf:/etc/letsencrypt
-    - ./certbot/www:/var/www/certbot
+    - ./services/certbot/conf:/etc/letsencrypt
+    - ./services/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     depends_on:
       - nginx
@@ -54,9 +54,9 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ./nginx/dev.conf:/etc/nginx/conf.d/default.conf
-      - ./certbot/conf/:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./services/nginx/dev.conf:/etc/nginx/conf.d/default.conf
+      - ./services/certbot/conf/:/etc/letsencrypt
+      - ./services/certbot/www:/var/www/certbot
     depends_on:
       - flask-api
       - client

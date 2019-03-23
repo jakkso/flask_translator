@@ -88,8 +88,7 @@ class UserRegistration(Endpoint):
                 )
                 send_email(new_user.username, subject, html)
             except SMTPSenderRefused:
-                # TODO figure out how to actually handle this
-                self.logger.error(f"Gmail rejected connection; {confirm_url}")
+                self.logger.error(f"Email provider login failure")
             finally:
                 return {"message": f'User {data["username"]} was created'}, 201
 
@@ -144,8 +143,7 @@ class UserActivation(Endpoint):
                 )
                 return {"message": "Verification email sent"}, 201
             except SMTPSenderRefused:
-                # TODO Figure out how to actually handle this
-                self.logger.error(f"Gmail rejected connection; {confirm_url}")
+                self.logger.error(f"Email provider login failure")
                 return {"message": "Something went wrong"}, 500
 
     @jwt_required
@@ -253,8 +251,7 @@ class UserResetPassword(Endpoint):
                     fmt("POST", user.username, "Successful password reset email req")
                 )
             except SMTPSenderRefused:
-                # TODO Figure out how to actually handle this.
-                self.logger.error(f"Gmail rejected connection: {url}")
+                self.logger.error(f"Email provider login failure")
         else:
             self.logger.info(
                 fmt(
